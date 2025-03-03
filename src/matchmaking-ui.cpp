@@ -156,11 +156,18 @@ inline bool update_current_match_status() {
     }
 
     ScheduleSlot* last_schedule_slot = tournament_scheduling_system->view_last_schedule();
+    if (last_schedule_slot == nullptr) {
+        std::cout << "There is no schedules anymore, run matchmaking system again!" << std::endl;
+        return true;
+    }
     std::string match_result_menu[] = {last_schedule_slot->match->player1->name + " won! (Player 1)", last_schedule_slot->match->player2->name + " won! (Player 2)", "Draw Match"};
-    FunctionPointer match_result_functions[] = {result_player1_won, result_player2_won, view_matchmaking_queue};
+    FunctionPointer match_result_functions[] = {result_player1_won, result_player2_won, result_draw};
+    result_status_buffer = UNDEFINED;
     while (run_menu("Scheduling and Matchmaking Management", match_result_menu, match_result_functions, 3)) {}
+    if (result_status_buffer == UNDEFINED) {
+        return true;
+    }
     tournament_scheduling_system->print_last_schedule();
-
     tournament_scheduling_system->last_match_completed(result_status_buffer);
     return true;
 }

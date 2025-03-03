@@ -118,6 +118,7 @@ void TournamentSchedulingSystem::last_match_completed(MATCH_STATUS status) {
                 rematch->match_type = current_slot->match->match_type;
                 rematch->player1 = current_slot->match->player1;
                 rematch->player2 = current_slot->match->player2;
+                add_schedule(rematch);
             break;
     }
 }

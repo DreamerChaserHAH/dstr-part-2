@@ -11,6 +11,7 @@ enum MATCH_TYPE{
 };
 
 enum MATCH_STATUS {
+    UNDEFINED,
     PLAYER_ONE_WIN,
     PLAYER_TWO_WIN,
     DRAW
