@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <string>
+
 enum SCHEDULE_TIME_SLOT{
     MONDAY_MORNING,
     MONDAY_AFTERNOON,
@@ -24,6 +26,12 @@ enum SCHEDULE_TIME_SLOT{
     SATURDAY_AFTERNOON,
     SATURDAY_EVENING,
     SUNDAY_MORNING,
+};
+
+/// @brief the court at which tournament is played
+enum TOURNAMENT_COURT{
+    MAIN_COURT,
+    SIDE_COURT
 };
 
 inline SCHEDULE_TIME_SLOT get_next_time_slot(SCHEDULE_TIME_SLOT current_slot){
@@ -116,13 +124,7 @@ inline std::string get_schedule_string(SCHEDULE_TIME_SLOT current_slot) {
     }
 }
 
-/// @brief the court at which tournament is played
-enum TOURNAMENT_COURT{
-    MAIN_COURT,
-    SIDE_COURT
-};
-
-TOURNAMENT_COURT get_next_court(TOURNAMENT_COURT current_court){
+inline TOURNAMENT_COURT get_next_court(TOURNAMENT_COURT current_court){
     if(current_court == MAIN_COURT){
         return SIDE_COURT;
     }else{

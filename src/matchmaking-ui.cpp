@@ -23,6 +23,7 @@ inline bool initialize_matchmaking_system() {
     }
 
     matchmaking_system = new MatchmakingSystem(player_list->sort(), player_list->number_of_players, tournament_scheduling_system);
+    tournament_scheduling_system->update_matchmaking_system(matchmaking_system);
     return true;
 }
 
@@ -121,7 +122,7 @@ bool run_menu(std::string context, std::string menu_name[], FunctionPointer func
             return true;
         }
 
-        functions[input - 1]();
+        return functions[input - 1]();
     }
     return true;
 }
@@ -130,21 +131,22 @@ bool matchmaking_menu() {
     std::string matchmaking_menu[] = {"Initialize Matchmaking System", "Start Matchmaking", "View Matchmaking Queue"};
     FunctionPointer matchmaking_functions[] = {initialize_matchmaking_system, start_matchmaking, view_matchmaking_queue};
     while (run_menu("Scheduling and Matchmaking Management", matchmaking_menu, matchmaking_functions, 3)) {}
+    return true;
 }
 
 inline bool result_player1_won() {
     result_status_buffer = PLAYER_ONE_WIN;
-    return true;
+    return false;
 }
 
 inline bool result_player2_won() {
     result_status_buffer = PLAYER_TWO_WIN;
-    return true;
+    return false;
 }
 
 inline bool result_draw() {
     result_status_buffer = DRAW;
-    return true;
+    return false;
 }
 
 inline bool update_current_match_status() {
@@ -160,18 +162,21 @@ inline bool update_current_match_status() {
     tournament_scheduling_system->print_last_schedule();
 
     tournament_scheduling_system->last_match_completed(result_status_buffer);
+    return true;
 }
 
 bool scheduling_menu() {
     std::string scheduling_menu[] = {"Initialize Scheduling Management System", "View All Upcoming Schedule", "View Upcoming Match Details", "Update Current Match Status"};
     FunctionPointer scheduling_functions[] = {initialize_scheduling_system, view_all_upcoming_schedule, view_upcoming_match_details, update_current_match_status};
     while (run_menu("Match Scheduling Management System", scheduling_menu, scheduling_functions, 4)){}
+    return true;
 }
 
 bool player_menu(){
     std::string player_menu[] = {"Load Players", "Display Players", "Display Players (Sorted)", "Reset Players"};
     FunctionPointer player_functions[] = {load_players, display_players, display_players_sorted, reset_players};
     while (run_menu("Player Management", player_menu, player_functions, 4)) {}
+    return true;
 }
 
 int main(){

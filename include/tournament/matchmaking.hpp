@@ -27,72 +27,7 @@
 #include "match.hpp"
 #include "tournament_schedule.hpp"
 
-/// @brief Qualifier Round with Circular Queue implementation
-/*class QualifierRoundMatchmakingSystem{
-    /// @brief queue the players
-    Player* matchmaking_queue;
-
-    // @brief depending on the number of players in the qualifier round, a certain number of players will be chosen for wildcard
-    Player* wildcard_players;
-
-    int front = 0;
-    int last = 0;
-
-    int number_of_qualifier_round_players = 0;
-    int number_of_players_in_queue = 0;
-
-    inline int move_to_next_index(int current_index){
-        return (current_index + 1) % number_of_qualifier_round_players;
-    }
-
-    public:
-        QualifierRoundMatchmakingSystem(Player* player_list, int number_of_qualifier_round_players){
-            this->matchmaking_queue = new Player[number_of_qualifier_round_players];
-            this->number_of_qualifier_round_players = number_of_qualifier_round_players;
-            for(int i = 0; i < number_of_qualifier_round_players; i++){
-                this->add_registered_player_to_matchmaking_system(&player_list[i]);
-            }
-        }
-
-        /// this is essentially the enqueue operation
-        void add_registered_player_to_matchmaking_system(Player* new_player){
-            // add the player to the queue (last index)
-            if (move_to_next_index(last) == front){
-                // queue is full
-                std::cout << "queue is full" << std::endl;
-                return;
-            }
-
-            matchmaking_queue[move_to_next_index(last)] = *new_player;
-            last = move_to_next_index(last);
-        }
-
-        std::pair<Player*, Player*> get_next_two_players(){
-            if (number_of_players_in_queue == 8) {
-                // the process of getting players is now completed, the other tournament class move to round robin stage
-                return std::pair(nullptr, nullptr);
-            }
-            std::pair<Player*, Player*> players = std::make_pair(nullptr, nullptr);
-            players.first = &matchmaking_queue[front];
-            players.second= &matchmaking_queue[];
-            front = (front + 1) % number_of_qualifier_round_players;
-            number_of_players_in_queue--;
-            if(front == last){
-                front = -1;
-                last = -1;
-            }
-            number_of_qualifier_round_players -= 2;
-            return players;
-        }
-
-        std::pair<Player*, Player*> view_next_two_players(){
-            return std::make_pair(&matchmaking_queue[front], &matchmaking_queue[(front + 1) % number_of_qualifier_round_players]);
-        }
-
-        Player* get_remaining_player(){
-            return &matchmaking_queue[front];
-        }
-};*/
+class TournamentSchedulingSystem;
 
 /// @brief single qualifying round that qualify the players to the next round (Circular Queue)
 class QualifierRoundMatchmakingSystem {
@@ -228,7 +163,6 @@ class KnockoutRoundMatchmakingSystem {
 };
 
 class MatchmakingSystem {
-
     /// <summary>
     /// A list of players that are still within the game (sorted)
     /// </summary>
@@ -251,74 +185,15 @@ class MatchmakingSystem {
     TournamentSchedulingSystem* tournament_scheduling_system = nullptr;
 
     int number_of_qualifier_round_players;
-
     public:
-        MatchmakingSystem(Player** player_list, int number_of_players, TournamentSchedulingSystem* tss){
-            this->player_list = new Player*[number_of_players];
-            for (int i = 0; i < number_of_players; i++) {
-                this->player_list[i] = player_list[i];
-            }
 
-            number_of_qualifier_round_players = number_of_players - 112;
-            //this->qualifier_round_matchmaking_system = new QualifierRoundMatchmakingSystem();
-            tournament_scheduling_system = tss;
-
-            if (this->qualifier_round_matchmaking_system == nullptr) {
-                this->qualifier_round_matchmaking_system = new QualifierRoundMatchmakingSystem(&player_list[105], number_of_qualifier_round_players);
-            }
-        }
-
+        MatchmakingSystem(Player** player_list, int number_of_players, TournamentSchedulingSystem* tss);
         /// @return an array of matches
-        Match* matchmake() {
-            if (current_matching_type == QUALIFIER) {
-                tournament_scheduling_system->add_schedule(this->qualifier_round_matchmaking_system->matchmake());
-            }
-            return nullptr;
-        }
+        Match* matchmake();
 
+        void add_player_back_to_matchmaking(Player* player);
 
-    /// <summary>
-    /// Get a list of all the matches that can be scheduled at this time with the currently available information
-    /// </summary>
-    /*std::pair<Player*, Player*>* matchmake(){
-        switch(current_matching_type){
-            case QUALIFIER:
-                return qualifier_round_matchmaking_system->dequeue_next_two_players();
-            case ROUNDROBIN:
-                return round_robin_round_matchmaking_system->dequeue_next_two_players();
-            case KNOCKOUT:
-                return knockout_round_matchmaking_system->dequeue_next_two_players();
-        }
-    }*/
+        bool update_match_status(Match* target_match, MATCH_STATUS status);
 
-        void add_player_back_to_matchmaking(Player* player) {
-            qualifier_round_matchmaking_system->enqueue(player);
-        }
-
-        bool update_match_status(Match* target_match, MATCH_STATUS status) {
-            switch (status) {
-                case PLAYER_ONE_WIN:
-                    add_player_back_to_matchmaking(target_match->player1);
-                    break;
-                case PLAYER_TWO_WIN:
-                    add_player_back_to_matchmaking(target_match->player2);
-                    break;
-                case DRAW:
-                default:
-                    add_player_back_to_matchmaking(target_match->player1);
-                    add_player_back_to_matchmaking(target_match->player2);
-            }
-            return true;
-        }
-
-        void display_matchmaking_queue() {
-            switch(current_matching_type){
-                case QUALIFIER:
-                    return qualifier_round_matchmaking_system->display_matchmaking_queue();
-                case ROUNDROBIN:
-                case KNOCKOUT:
-                    break;
-            }
-        }
-
+        void display_matchmaking_queue();
 };
