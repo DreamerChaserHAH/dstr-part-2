@@ -105,20 +105,34 @@ void TournamentSchedulingSystem::last_match_completed(MATCH_STATUS status) {
     switch (status) {
         case PLAYER_ONE_WIN:
             matchmaking_system->add_player_back_to_matchmaking(current_slot->match->player1);
+            current_slot->match->player1->performance.total_matches_played++;
+            current_slot->match->player1->performance.total_matches_won++;
+
+            current_slot->match->player2->performance.total_matches_played++;
+            current_slot->match->player2->performance.total_matches_lost++;
             break;
         case PLAYER_TWO_WIN:
             matchmaking_system->add_player_back_to_matchmaking(current_slot->match->player2);
+            current_slot->match->player2->performance.total_matches_played++;
+            current_slot->match->player2->performance.total_matches_won++;
+
+            current_slot->match->player1->performance.total_matches_played++;
+            current_slot->match->player1->performance.total_matches_lost++;
             break;
         default:
             // No need to add into the matchmaking system, just requeue
             // Draw
             // Reschedule the match
-                auto* rematch = new Match;
-                rematch->match_id = 0;
-                rematch->match_type = current_slot->match->match_type;
-                rematch->player1 = current_slot->match->player1;
-                rematch->player2 = current_slot->match->player2;
-                add_schedule(rematch);
+            auto* rematch = new Match;
+            rematch->match_id = 0;
+            rematch->match_type = current_slot->match->match_type;
+            rematch->player1 = current_slot->match->player1;
+            rematch->player2 = current_slot->match->player2;
+            add_schedule(rematch);
+
+            current_slot->match->player2->performance.total_matches_played++;
+
+            current_slot->match->player1->performance.total_matches_played++;
             break;
     }
 }

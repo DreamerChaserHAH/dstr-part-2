@@ -78,6 +78,7 @@ class QualifierRoundMatchmakingSystem {
             this->all_players = player_list;
             this->matchmaking_free_queue = new Player*[number_of_qualifying_players];
             for(int i = 0; i < number_of_qualifying_players; i++){
+                player_list[i]->performance.current_round = MATCH_TYPE::QUALIFIER;
                 enqueue(player_list[i]);
             }
             this->number_of_total_qualifying_players = number_of_qualifying_players;
@@ -149,9 +150,85 @@ class QualifierRoundMatchmakingSystem {
 };
 
 class RoundRobinRoundMatchmakingSystem {
-    public:
-        RoundRobinRoundMatchmakingSystem() {
+    // the list of all players that are being considered
 
+    class RoundRobinGrouping {
+        Player** players;
+
+        int front = 0;
+        int back = 3;
+        public:
+            explicit RoundRobinGrouping(Player** players) {
+                this->players = players;
+            }
+
+            int move_to_next(int original_index) {
+                return (original_index + 1) % 4;
+            }
+            void rotate() {
+                front = move_to_next(front);
+                back = move_to_next(back);
+            }
+
+            MatchesContainer* matchmake() {
+                //return two matches
+                auto* matches_container = new MatchesContainer;
+                matches_container->matches = new Match[6];
+                matches_container->number_of_matches = 6;
+                for (int j = 0; j < 3; j++) {
+                    int current_index = back;
+                    for (int i = 0; i < 2; i++) {
+                        Match new_match{};
+                        new_match.match_id = 0;
+                        new_match.match_type = ROUNDROBIN;
+                        current_index = move_to_next(current_index);
+                        new_match.player1 = players[current_index];
+                        current_index = move_to_next(current_index);
+                        new_match.player2 = players[current_index];
+                        matches_container->matches[j * 2 + i] = new_match;
+                    }
+                    rotate();
+                }
+                return matches_container;
+            }
+    };
+
+    Player** all_players;
+
+    bool match_made = false;
+    bool round_ended = false;
+
+    public:
+        explicit RoundRobinRoundMatchmakingSystem(Player** players) {
+            this->all_players = players;
+        }
+
+        /// @returns a list of all the matches that can be made and schedule right now
+        MatchesContainer* matchmake() {
+            if (match_made) {
+                return nullptr;
+            }
+            match_made = true;
+            int number_of_matches = 6 * 32;
+            auto* matches_container = new MatchesContainer;
+            matches_container->matches = new Match[number_of_matches];
+            matches_container->number_of_matches = number_of_matches;
+            for (int i = 0; i < 32; i++) {
+                auto current_group = RoundRobinGrouping(&all_players[i * 4]);
+                auto* group_matches = current_group.matchmake();
+                for (int j = 0; j < 6; j++) {
+                    matches_container->matches[i * 6 + j] = group_matches->matches[j];
+                }
+            }
+            return matches_container;
+        }
+
+        bool is_ended() {
+            return round_ended;
+        }
+
+        Player** get_remaining_players() {
+            return nullptr;
         }
 };
 
@@ -185,6 +262,9 @@ class MatchmakingSystem {
     TournamentSchedulingSystem* tournament_scheduling_system = nullptr;
 
     int number_of_qualifier_round_players;
+
+    int total_number_of_players;
+
     public:
 
         MatchmakingSystem(Player** player_list, int number_of_players, TournamentSchedulingSystem* tss);

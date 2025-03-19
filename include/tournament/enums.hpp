@@ -34,6 +34,31 @@ enum TOURNAMENT_COURT{
     SIDE_COURT
 };
 
+/// the enum to categorize between the 3 match types
+enum MATCH_TYPE{
+    UNDEFINED, //<- withdraw earlier?
+    QUALIFIER,
+    ROUNDROBIN,
+    KNOCKOUT
+};
+
+enum MATCH_STATUS {
+    UNDECIDED,
+    PLAYER_ONE_WIN,
+    PLAYER_TWO_WIN,
+    DRAW
+};
+
+enum PLAYER_TYPE{
+    NORMAL,
+    VIP
+};
+
+enum PLAYER_STATUS {
+    COMPETING,
+    ELIMINATED
+};
+
 inline SCHEDULE_TIME_SLOT get_next_time_slot(SCHEDULE_TIME_SLOT current_slot){
     switch(current_slot){
         case MONDAY_MORNING:

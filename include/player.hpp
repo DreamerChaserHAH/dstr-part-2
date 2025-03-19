@@ -4,11 +4,15 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include "tournament/enums.hpp"
 #include <algorithm>
 
-enum PLAYER_TYPE{
-    NORMAL,
-    VIP
+struct TournamentPerformance {
+    int total_matches_played = 0;
+    int total_matches_won = 0;
+    int total_matches_lost = 0;
+    MATCH_TYPE current_round = MATCH_TYPE::UNDEFINED;
+    PLAYER_STATUS current_status = PLAYER_STATUS::COMPETING;
 };
 
 struct Player{
@@ -22,8 +26,10 @@ struct Player{
     std::string country_of_origin;
     /// @brief the type of the player
     PLAYER_TYPE player_type;
-    /// @brief the tennis rating of the player
+    /// @brief the initial tennis rating of the player
     int rating;
+    /// @brief the performance of the player
+    TournamentPerformance performance;
 };
 
 /// Priority Queue Implementation

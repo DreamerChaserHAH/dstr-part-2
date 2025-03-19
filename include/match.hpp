@@ -1,21 +1,8 @@
 #pragma once
+#include "tournament/enums.hpp"
 
 /// forward declarations
 struct Player;
-
-/// the enum to categorize between the 3 match types
-enum MATCH_TYPE{
-    QUALIFIER,
-    ROUNDROBIN,
-    KNOCKOUT
-};
-
-enum MATCH_STATUS {
-    UNDEFINED,
-    PLAYER_ONE_WIN,
-    PLAYER_TWO_WIN,
-    DRAW
-};
 
 struct Match {
     /// @brief the unique id of the match
