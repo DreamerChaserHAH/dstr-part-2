@@ -209,14 +209,17 @@ class RoundRobinRoundMatchmakingSystem : public BaseMatchmakingSystem {
                 auto* matches_container = new MatchesContainer;
                 matches_container->matches = new Match[6];
                 matches_container->number_of_matches = 6;
+
+                rotate();
+
+                int current_adding_index = 0;
                 for (int j = 0; j < 3; j++) {
                     int current_index = back;
-                    for (int i = 0; i < 2; i++) {
+                    for (int i = move_to_next(current_index); i < 4; i++) {
                         Match new_match{};
-                        int player_1_index = move_to_next(current_index);
-                        int player_2_index = move_to_next(player_1_index);
-                        new_match.createMatch(ROUNDROBIN, players[player_1_index], players[player_2_index]);
-                        matches_container->matches[j * 2 + i] = new_match;
+                        new_match.createMatch(ROUNDROBIN, players[current_index], players[i]);
+                        matches_container->matches[current_adding_index] = new_match;
+                        current_adding_index++;
                     }
                     rotate();
                 }
@@ -251,6 +254,7 @@ class RoundRobinRoundMatchmakingSystem : public BaseMatchmakingSystem {
                     matches_container->matches[i * 6 + j] = group_matches->matches[j];
                 }
             }
+            set_is_completed(true);
             return matches_container;
         }
 

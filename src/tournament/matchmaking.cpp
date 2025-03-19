@@ -35,10 +35,14 @@ void MatchmakingSystem::matchmake() {
                 this->base_matchmaking_system = new RoundRobinRoundMatchmakingSystem(player_list);
                 matches_container = this->base_matchmaking_system->matchmake();
                 break;
-            case ROUNDROBIN:
-                break;
-            case KNOCKOUT:
-                default:
+            default:
+                // check if the scheduling system is empty or not
+                if (tournament_scheduling_system->view_last_schedule() != nullptr) {
+                    std::cout << "All matches inside Round Robin Stage must be completed before the matchmaking system can proceed to the next round" << std::endl;
+                    break;
+                }
+                Player** knockout_round_player_list = base_matchmaking_system->get_remaining_players();
+                std::cout << "32 players that will proceed to knockout round has been generated!" << std::endl;
                 break;
         }
     }
@@ -58,18 +62,12 @@ bool MatchmakingSystem::update_match_status(Match* target_match, MATCH_STATUS st
             switch (status) {
                 case PLAYER_ONE_WIN:
                     add_player_back_to_matchmaking(target_match->player1);
-                    target_match->player1->performance.total_matches_played++;
                     target_match->player1->performance.total_matches_won++;
-
-                    target_match->player2->performance.total_matches_played++;
                     target_match->player2->performance.total_matches_lost++;
                     break;
                 case PLAYER_TWO_WIN:
                     add_player_back_to_matchmaking(target_match->player2);
-                    target_match->player2->performance.total_matches_played++;
                     target_match->player2->performance.total_matches_won++;
-
-                    target_match->player1->performance.total_matches_played++;
                     target_match->player1->performance.total_matches_lost++;
                     break;
                 case DRAW:
@@ -77,17 +75,34 @@ bool MatchmakingSystem::update_match_status(Match* target_match, MATCH_STATUS st
                     auto* rematch = new Match;
                     rematch->createMatch(target_match->match_type, target_match->player1, target_match->player2);
                     tournament_scheduling_system->add_schedule(rematch);
-                    target_match->player2->performance.total_matches_played++;
-                    target_match->player1->performance.total_matches_played++;
                 break;
             }
             break;
         case ROUNDROBIN:
+            switch (status) {
+                case PLAYER_ONE_WIN:
+                    target_match->player1->performance.total_matches_won++;
+                    target_match->player2->performance.total_matches_lost++;
+                    target_match->player1->performance.roundrobin_score += 2;
+                    break;
+                case PLAYER_TWO_WIN:
+                    target_match->player2->performance.total_matches_won++;
+                    target_match->player1->performance.total_matches_lost++;
+                    target_match->player2->performance.roundrobin_score += 2;
+                    break;
+                case DRAW:
+                    default:
+                    target_match->player1->performance.roundrobin_score += 1;
+                    target_match->player2->performance.roundrobin_score += 1;
+                    break;
+            }
             break;
         case KNOCKOUT:
             default:
             break;
     }
+    target_match->player2->performance.total_matches_played++;
+    target_match->player1->performance.total_matches_played++;
     return true;
 }
 

@@ -11,6 +11,7 @@ struct TournamentPerformance {
     int total_matches_played = 0;
     int total_matches_won = 0;
     int total_matches_lost = 0;
+    int roundrobin_score = 0;
     MATCH_TYPE current_round = MATCH_TYPE::UNDEFINED;
     PLAYER_STATUS current_status = PLAYER_STATUS::COMPETING;
 };

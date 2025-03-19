@@ -8,6 +8,7 @@ class MatchmakingSystem;
 
 /// @brief the slot of the schedule containing relevant data
 struct ScheduleSlot{
+
     Match* match = nullptr;
     int week = 0;
     SCHEDULE_TIME_SLOT time_slot = MONDAY_MORNING;
