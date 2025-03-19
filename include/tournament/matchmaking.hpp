@@ -29,8 +29,49 @@
 
 class TournamentSchedulingSystem;
 
+/// the base class that all 3 matchmaking system type will be depending on
+class BaseMatchmakingSystem {
+    // check if this stage is completed or not
+    bool is_completed;
+    // the type of match
+    MATCH_TYPE match_type;
+
+    public:
+    virtual ~BaseMatchmakingSystem() = default;
+
+    BaseMatchmakingSystem(MATCH_TYPE match_type) {
+            this->match_type = match_type;
+            this->is_completed = false;
+        }
+
+        void set_is_completed(bool _is_completed) {
+            this->is_completed = _is_completed;
+        }
+
+        bool completed() {
+            return this->is_completed;
+        }
+
+        void set_current_stage(MATCH_TYPE _match_type) {
+            this->match_type = _match_type;
+        }
+
+        MATCH_TYPE get_current_stage() {
+            return this->match_type;
+        }
+
+        /// Matchmake with the information on hand
+        virtual MatchesContainer* matchmake() = 0;
+
+        /// display the list of players that is being processed inside the queue
+        virtual void display_matchmaking_queue() = 0;
+
+        /// @returns a 8 player list that are qualified from here
+        virtual Player** get_remaining_players() = 0;
+};
+
 /// @brief single qualifying round that qualify the players to the next round (Circular Queue)
-class QualifierRoundMatchmakingSystem {
+class QualifierRoundMatchmakingSystem : public BaseMatchmakingSystem{
 
     ///A list of all the players that are being considered
     Player** all_players;
@@ -47,7 +88,6 @@ class QualifierRoundMatchmakingSystem {
     int last = 0;
 
     Match* current_running_matches = nullptr;
-    bool round_ended = false;
 
     inline int move_to_next_index(int current_index) {
         return (current_index + 1) % number_of_total_qualifying_players;
@@ -74,7 +114,7 @@ class QualifierRoundMatchmakingSystem {
     }
 
     public:
-        QualifierRoundMatchmakingSystem(Player** player_list, int number_of_qualifying_players){
+        QualifierRoundMatchmakingSystem(Player** player_list, int number_of_qualifying_players) : BaseMatchmakingSystem(QUALIFIER){
             this->all_players = player_list;
             this->matchmaking_free_queue = new Player*[number_of_qualifying_players];
             for(int i = 0; i < number_of_qualifying_players; i++){
@@ -86,12 +126,12 @@ class QualifierRoundMatchmakingSystem {
             this->number_of_remaining_players_in_queue = number_of_qualifying_players;
         }
         /// @returns a list of all the matches that can be made and schedule right now
-        MatchesContainer* matchmake(){
+        MatchesContainer* matchmake() override{
             int potential_remaining_players_after_matchmaking = this->number_of_remaining_players;
             int potential_players_in_queue = this->number_of_remaining_players_in_queue;
             if (potential_remaining_players_after_matchmaking == 8) {
                 // the process of getting players is now completed, the other tournament class move to round robin stage
-                round_ended = true;
+                set_is_completed(true);
                 return nullptr;
             }
 
@@ -108,15 +148,13 @@ class QualifierRoundMatchmakingSystem {
                 Player* player1 = dequeue();
                 Player* player2 = dequeue();
                 Match new_match{};
-                new_match.match_id = 0;
-                new_match.match_type = QUALIFIER;
-                new_match.player1 = player1;
-                new_match.player2 = player2;
+                new_match.createMatch(QUALIFIER, player1, player2);
                 matches_container->matches[i] = new_match;
             }
 
             std::cout << "Number of Remaining Players : " << this->number_of_remaining_players << std::endl;;
             std::cout << "Matches Created : " << number_of_matches_to_be_made << std::endl;
+
             this->number_of_remaining_players = potential_remaining_players_after_matchmaking;
             matches_container->number_of_matches = number_of_matches_to_be_made;
             return matches_container;
@@ -132,7 +170,7 @@ class QualifierRoundMatchmakingSystem {
             last = move_to_next_index(last);
         }
 
-        void display_matchmaking_queue() {
+        void display_matchmaking_queue() override{
             int current_index = front;
             for (int i = 0; i < number_of_remaining_players_in_queue; i++) {
                 std::cout << matchmaking_free_queue[current_index]->name << std::endl;
@@ -140,16 +178,12 @@ class QualifierRoundMatchmakingSystem {
             }
         }
 
-        bool is_ended() {
-            return round_ended;
-        }
-        /// @returns a 8 player list that are qualified from here
-        Player** get_remaining_players() {
+        Player** get_remaining_players() override{
             return matchmaking_free_queue;
         }
 };
 
-class RoundRobinRoundMatchmakingSystem {
+class RoundRobinRoundMatchmakingSystem : public BaseMatchmakingSystem {
     // the list of all players that are being considered
 
     class RoundRobinGrouping {
@@ -179,12 +213,9 @@ class RoundRobinRoundMatchmakingSystem {
                     int current_index = back;
                     for (int i = 0; i < 2; i++) {
                         Match new_match{};
-                        new_match.match_id = 0;
-                        new_match.match_type = ROUNDROBIN;
-                        current_index = move_to_next(current_index);
-                        new_match.player1 = players[current_index];
-                        current_index = move_to_next(current_index);
-                        new_match.player2 = players[current_index];
+                        int player_1_index = move_to_next(current_index);
+                        int player_2_index = move_to_next(player_1_index);
+                        new_match.createMatch(ROUNDROBIN, players[player_1_index], players[player_2_index]);
                         matches_container->matches[j * 2 + i] = new_match;
                     }
                     rotate();
@@ -199,12 +230,12 @@ class RoundRobinRoundMatchmakingSystem {
     bool round_ended = false;
 
     public:
-        explicit RoundRobinRoundMatchmakingSystem(Player** players) {
+        explicit RoundRobinRoundMatchmakingSystem(Player** players) : BaseMatchmakingSystem(ROUNDROBIN) {
             this->all_players = players;
         }
 
         /// @returns a list of all the matches that can be made and schedule right now
-        MatchesContainer* matchmake() {
+        MatchesContainer* matchmake() override{
             if (match_made) {
                 return nullptr;
             }
@@ -223,11 +254,13 @@ class RoundRobinRoundMatchmakingSystem {
             return matches_container;
         }
 
-        bool is_ended() {
-            return round_ended;
+        void display_matchmaking_queue() override {
+            if (match_made) {
+                std::cout << "Matchmaking has been done already! Please check the scheduling system for reference!" << std::endl;
+                return;
+            }
         }
-
-        Player** get_remaining_players() {
+        Player** get_remaining_players() override {
             return nullptr;
         }
 };
@@ -250,14 +283,7 @@ class MatchmakingSystem {
     /// </summary>
     MATCH_TYPE current_matching_type = QUALIFIER;
 
-    /// <summary>
-    ///
-    /// </summary>
-    QualifierRoundMatchmakingSystem* qualifier_round_matchmaking_system = nullptr;;
-
-    RoundRobinRoundMatchmakingSystem* round_robin_round_matchmaking_system = nullptr;
-
-    KnockoutRoundMatchmakingSystem* knockout_round_matchmaking_system = nullptr;
+    BaseMatchmakingSystem* base_matchmaking_system = nullptr;
 
     TournamentSchedulingSystem* tournament_scheduling_system = nullptr;
 
@@ -269,7 +295,7 @@ class MatchmakingSystem {
 
         MatchmakingSystem(Player** player_list, int number_of_players, TournamentSchedulingSystem* tss);
         /// @return an array of matches
-        Match* matchmake();
+        void matchmake();
 
         void add_player_back_to_matchmaking(Player* player);
 
