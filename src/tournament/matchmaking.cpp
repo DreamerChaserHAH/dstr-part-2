@@ -82,11 +82,13 @@ void MatchmakingSystem::display_ranking() {
 void MatchmakingSystem::add_player_back_to_matchmaking(Player* winning_player, Player* losing_player) {
     if (current_matching_type == QUALIFIER) {
         dynamic_cast<QualifierRoundMatchmakingSystem*>(this->base_matchmaking_system)->enqueue(winning_player);
+        losing_player->performance.current_status = COMPLETED;
     }
 
     if (current_matching_type == KNOCKOUT) {
         dynamic_cast<KnockoutRoundMatchmakingSystem*>(this->base_matchmaking_system)->enqueue(winning_player);
         dynamic_cast<KnockoutRoundMatchmakingSystem*>(this->base_matchmaking_system)->push_to_ranking(losing_player);
+        losing_player->performance.current_status = COMPLETED;
     }
 }
 

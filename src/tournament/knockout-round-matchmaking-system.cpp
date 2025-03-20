@@ -1,5 +1,14 @@
 #include "tournament/matchmaking.hpp"
 
+KnockoutRoundMatchmakingSystem::KnockoutRoundMatchmakingSystem(Player** all_players) : BaseMatchmakingSystem(MATCH_TYPE::KNOCKOUT, all_players) {
+    knockout_round_queue = new PlayerDoubleEndedPriorityQueue(all_players, 32);
+    this->number_of_remaining_players = 32;
+    player_ranking = new PlayerRanking(32);
+    for (int i = 0; i < 32; i++) {
+        all_players[i]->performance.current_round = MATCH_TYPE::KNOCKOUT;
+    }
+}
+
 MatchesContainer* KnockoutRoundMatchmakingSystem::matchmake() {
     //number of remaining players that will move onto the next stage
     int potential_remaining_players_after_matchmaking = this->number_of_remaining_players;

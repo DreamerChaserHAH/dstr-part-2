@@ -111,6 +111,15 @@ bool reset_players() {
     return true;
 }
 
+bool display_player_status() {
+    if (player_list == nullptr) {
+        std::cout << "Player List is not loaded" << std::endl;
+        return true;
+    }
+    player_list->display_player_status();
+    return true;
+}
+
 bool run_menu(std::string context, std::string menu_name[], FunctionPointer functions[], int number_of_functions){
     std::cout << "___________________________" << std::endl;
     std::cout << context << ":" << std::endl;
@@ -190,9 +199,9 @@ bool scheduling_menu() {
 }
 
 bool player_menu(){
-    std::string player_menu[] = {"Load Players", "Display Players", "Display Players (Sorted)", "Reset Players"};
-    FunctionPointer player_functions[] = {load_players, display_players, display_players_sorted, reset_players};
-    while (run_menu("Player Management", player_menu, player_functions, 4)) {}
+    std::string player_menu[] = {"Load Players", "Display Players", "Display Players (Sorted)", "Reset Players", "Display Player Status"};
+    FunctionPointer player_functions[] = {load_players, display_players, display_players_sorted, reset_players, display_player_status};
+    while (run_menu("Player Management", player_menu, player_functions, 5)) {}
     return true;
 }
 

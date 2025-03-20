@@ -170,4 +170,12 @@ class CompetitionPlayerList{
 
             return sorted_player_list;
         }
+
+        /// print out the status of all players
+        bool display_player_status() {
+            std::cout << std::setw(30) << "Player Name" << std::setw(20) << "Matches Won" << std::setw(20) << "Matches Lost" << std::setw(20) << "Total Matches Played" << std::setw(20) << "Round Robin Score" << std::setw(20) << "Current Round" << std::setw(20) << "Current Status" << std::endl;
+            for (int i = 0; i < number_of_players; i++) {
+                std::cout << std::setw(30) << player_list[i].name << std::setw(20) << player_list[i].performance.total_matches_won << std::setw(20) << player_list[i].performance.total_matches_lost << std::setw(20) << player_list[i].performance.total_matches_played << std::setw(20) << player_list[i].performance.roundrobin_score << std::setw(20) << get_match_type_string(player_list[i].performance.current_round) << std::setw(20) << get_player_status_string(player_list[i].performance.current_status) << std::endl;
+            }
+        }
 };

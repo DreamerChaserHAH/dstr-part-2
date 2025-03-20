@@ -280,12 +280,18 @@ class RoundRobinRoundMatchmakingSystem : public BaseMatchmakingSystem {
         }
 
         Player* get_winning_player() {
+
             Player* winning_player = players[0];
+
             for (int i = 1; i < size; i++) {
                 if (players[i]->rating > winning_player->rating) {
+                    winning_player->performance.current_status = COMPLETED;
                     winning_player = players[i];
+                    continue;
                 }
+                players[i]->performance.current_status = COMPLETED;
             }
+            winning_player->performance.current_status = COMPETING;
             return winning_player;
         }
     };
@@ -294,7 +300,11 @@ class RoundRobinRoundMatchmakingSystem : public BaseMatchmakingSystem {
     bool round_ended = false;
 
     public:
-        explicit RoundRobinRoundMatchmakingSystem(Player** all_players) : BaseMatchmakingSystem(ROUNDROBIN, all_players) {}
+        explicit RoundRobinRoundMatchmakingSystem(Player** all_players) : BaseMatchmakingSystem(ROUNDROBIN, all_players) {
+            for (int i = 0; i < 128; i++) {
+                all_players[i]->performance.current_round = ROUNDROBIN;
+            }
+        }
 
         /// @returns a list of all the matches that can be made and schedule right now
         MatchesContainer* matchmake() override{
@@ -407,11 +417,8 @@ class KnockoutRoundMatchmakingSystem: public BaseMatchmakingSystem {
     int number_of_remaining_players;
 
     public:
-        explicit KnockoutRoundMatchmakingSystem(Player** all_players) : BaseMatchmakingSystem(MATCH_TYPE::KNOCKOUT, all_players) {
-            knockout_round_queue = new PlayerDoubleEndedPriorityQueue(all_players, 32);
-            this->number_of_remaining_players = 32;
-            player_ranking = new PlayerRanking(32);
-        }
+
+        KnockoutRoundMatchmakingSystem(Player** all_players);
 
         void enqueue(Player* player) {
             this->knockout_round_queue->enqueue(player);

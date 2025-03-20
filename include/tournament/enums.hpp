@@ -42,6 +42,19 @@ enum MATCH_TYPE{
     KNOCKOUT
 };
 
+inline std::string get_match_type_string(MATCH_TYPE match_type){
+    switch(match_type){
+        case QUALIFIER:
+            return "QUALIFIER";
+        case ROUNDROBIN:
+            return "ROUNDROBIN";
+        case KNOCKOUT:
+            return "KNOCKOUT";
+        default:
+            return "UNDEFINED";
+    }
+}
+
 enum MATCH_STATUS {
     UNDECIDED,
     PLAYER_ONE_WIN,
@@ -56,8 +69,19 @@ enum PLAYER_TYPE{
 
 enum PLAYER_STATUS {
     COMPETING,
-    ELIMINATED
+    COMPLETED
 };
+
+inline std::string get_player_status_string(PLAYER_STATUS status){
+    switch(status){
+        case COMPETING:
+            return "COMPETING";
+        case COMPLETED:
+            return "COMPLETED";
+        default:
+            return "COMPETING";
+    }
+}
 
 inline SCHEDULE_TIME_SLOT get_next_time_slot(SCHEDULE_TIME_SLOT current_slot){
     switch(current_slot){
