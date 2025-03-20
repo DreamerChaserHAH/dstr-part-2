@@ -269,9 +269,13 @@ class RoundRobinRoundMatchmakingSystem : public BaseMatchmakingSystem {
         }
 };
 
-class KnockoutRoundMatchmakingSystem {
+class KnockoutRoundMatchmakingSystem: public BaseMatchmakingSystem {
+
+    /// all the players that will be considered for the knockout round
+    Player** all_players;
+
     public:
-        KnockoutRoundMatchmakingSystem() {
+        KnockoutRoundMatchmakingSystem(Player** players) : BaseMatchmakingSystem(KNOCKOUT) {
 
         }
 };
