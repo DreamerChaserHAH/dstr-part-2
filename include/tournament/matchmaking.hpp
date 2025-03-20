@@ -244,55 +244,50 @@ class RoundRobinRoundMatchmakingSystem : public BaseMatchmakingSystem {
 
     /// @brief Circular Queue Implementation for Round Robin Matches
     class RoundRobinGrouping {
-        Player** players;
+        Player* players[4];  // Fixed-size circular array
+        int size = 4;
 
-        int front = 0;
-        int back = 3;
-        public:
-            explicit RoundRobinGrouping(Player** players) {
-                this->players = players;
+    public:
+        explicit RoundRobinGrouping(Player** input_players) {
+            for (int i = 0; i < size; i++) {
+                players[i] = input_players[i];
             }
+        }
 
-            int move_to_next(int original_index) {
-                return (original_index + 1) % 4;
+        void rotate() {
+            Player* temp = players[0];
+            for (int i = 0; i < size - 1; i++) {
+                players[i] = players[i + 1];
             }
-            void rotate() {
-                front = move_to_next(front);
-                back = move_to_next(back);
-            }
+            players[size - 1] = temp;
+        }
 
-            MatchesContainer* matchmake() {
-                //return two matches
-                auto* matches_container = new MatchesContainer;
-                matches_container->matches = new Match[6];
-                matches_container->number_of_matches = 6;
+        MatchesContainer* matchmake() {
+            auto* matches_container = new MatchesContainer;
+            matches_container->matches = new Match[6];
+            matches_container->number_of_matches = 6;
 
+            int current_adding_index = 0;
+            for (int round = 0; round < 3; round++) {
+                for (int i = 0; i < size / 2; i++) {
+                    Match new_match{};
+                    new_match.createMatch(ROUNDROBIN, players[i], players[size - 1 - i]);
+                    matches_container->matches[current_adding_index++] = new_match;
+                }
                 rotate();
-
-                int current_adding_index = 0;
-                for (int j = 0; j < 3; j++) {
-                    int current_index = back;
-                    for (int i = move_to_next(current_index); i < 4; i++) {
-                        Match new_match{};
-                        new_match.createMatch(ROUNDROBIN, players[current_index], players[i]);
-                        matches_container->matches[current_adding_index] = new_match;
-                        current_adding_index++;
-                    }
-                    rotate();
-                }
-                return matches_container;
             }
+            return matches_container;
+        }
 
-            Player* get_winning_player() {
-                Player* winning_player = players[front];
-                for (int i = 1; i < 4; i++) {
-                    if (players[front]->rating > winning_player->rating) {
-                        winning_player = players[front];
-                    }
+        Player* get_winning_player() {
+            Player* winning_player = players[0];
+            for (int i = 1; i < size; i++) {
+                if (players[i]->rating > winning_player->rating) {
+                    winning_player = players[i];
                 }
-                return winning_player;
             }
-
+            return winning_player;
+        }
     };
 
     bool match_made = false;
