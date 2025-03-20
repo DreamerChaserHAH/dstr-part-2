@@ -2,25 +2,27 @@
 
 MatchmakingSystem::MatchmakingSystem(Player** player_list, int number_of_players, TournamentSchedulingSystem* tss){
     this->player_list = new Player*[number_of_players];
-    this->player_ranking = new PlayerRanking(128);
 
     for (int i = 0; i < number_of_players; i++) {
         this->player_list[i] = player_list[i];
     }
 
     this->total_number_of_players = number_of_players;
-    number_of_qualifier_round_players = number_of_players - 112;
+    number_of_qualifier_round_players = number_of_players - 120;
     //this->qualifier_round_matchmaking_system = new QualifierRoundMatchmakingSystem();
     tournament_scheduling_system = tss;
-    this->base_matchmaking_system = new QualifierRoundMatchmakingSystem(&player_list[112], number_of_qualifier_round_players);
+
+    /// V.I.P players from index 112 to the end, will be considered with priority for up to 8 players
+
+    this->base_matchmaking_system = new QualifierRoundMatchmakingSystem(&player_list[120], number_of_qualifier_round_players);
 }
 
 /// @return an array of matches
 void MatchmakingSystem::matchmake() {
 
-    if (base_matchmaking_system == nullptr) {
+    if (base_matchmaking_system == nullptr || completed) {
         // The tournament has completed because there is no more stages to go through!
-        std::cout << "No more matchmaking can be done as a winner has already been defined!" << std::endl;
+        std::cout << "No more matchmaking can be done as a winner has already been defined! Please view the ranking for details" << std::endl;
         return;
     }
 
@@ -53,6 +55,10 @@ void MatchmakingSystem::matchmake() {
                 this->base_matchmaking_system = new KnockoutRoundMatchmakingSystem(base_matchmaking_system->get_remaining_players());
                 matches_container = this->base_matchmaking_system->matchmake();
                 break;
+            case KNOCKOUT:
+                std::cout << "The tournament has been completed!" << std::endl;
+                completed = true;
+                break;
             default:
                 break;
         }
@@ -61,13 +67,26 @@ void MatchmakingSystem::matchmake() {
     tournament_scheduling_system->push(matches_container);
 }
 
-void MatchmakingSystem::add_player_back_to_matchmaking(Player* player) {
+void MatchmakingSystem::display_ranking() {
+    if (current_matching_type == KNOCKOUT) {
+        if (base_matchmaking_system->completed() && tournament_scheduling_system->peek() == nullptr) {
+            dynamic_cast<KnockoutRoundMatchmakingSystem*>(this->base_matchmaking_system)->display_ranking();
+            return;
+        }
+        std::cout << "Ranking is only available after all the matches are completed!" << std::endl;
+        return;
+    }
+    std::cout << "Ranking is only available in Knockout Round!" << std::endl;
+}
+
+void MatchmakingSystem::add_player_back_to_matchmaking(Player* winning_player, Player* losing_player) {
     if (current_matching_type == QUALIFIER) {
-        dynamic_cast<QualifierRoundMatchmakingSystem*>(this->base_matchmaking_system)->enqueue(player);
+        dynamic_cast<QualifierRoundMatchmakingSystem*>(this->base_matchmaking_system)->enqueue(winning_player);
     }
 
     if (current_matching_type == KNOCKOUT) {
-        dynamic_cast<KnockoutRoundMatchmakingSystem*>(this->base_matchmaking_system)->enqueue(player);
+        dynamic_cast<KnockoutRoundMatchmakingSystem*>(this->base_matchmaking_system)->enqueue(winning_player);
+        dynamic_cast<KnockoutRoundMatchmakingSystem*>(this->base_matchmaking_system)->push_to_ranking(losing_player);
     }
 }
 
@@ -77,12 +96,12 @@ bool MatchmakingSystem::update_match_status(Match* target_match, MATCH_STATUS st
             case KNOCKOUT:
             switch (status) {
                 case PLAYER_ONE_WIN:
-                    add_player_back_to_matchmaking(target_match->player1);
+                    add_player_back_to_matchmaking(target_match->player1, target_match->player2);
                     target_match->player1->performance.total_matches_won++;
                     target_match->player2->performance.total_matches_lost++;
                     break;
                 case PLAYER_TWO_WIN:
-                    add_player_back_to_matchmaking(target_match->player2);
+                    add_player_back_to_matchmaking(target_match->player2, target_match->player1);
                     target_match->player2->performance.total_matches_won++;
                     target_match->player1->performance.total_matches_lost++;
                     break;

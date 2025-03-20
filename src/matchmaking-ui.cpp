@@ -47,6 +47,15 @@ inline bool view_matchmaking_queue() {
     return true;
 }
 
+inline bool view_ranking() {
+    if (matchmaking_system == nullptr) {
+        std::cout << "Matchmaking System has yet to be initialized" << std::endl;
+        return true;
+    }
+    matchmaking_system->display_ranking();
+    return true;
+}
+
 inline bool initialize_scheduling_system() {
     tournament_scheduling_system = new TournamentSchedulingSystem();
     std::cout << "Tournament Scheduling System has been initialized" << std::endl;
@@ -127,10 +136,11 @@ bool run_menu(std::string context, std::string menu_name[], FunctionPointer func
     return true;
 }
 
+
 bool matchmaking_menu() {
-    std::string matchmaking_menu[] = {"Initialize Matchmaking System", "Start Matchmaking", "View Matchmaking Queue"};
-    FunctionPointer matchmaking_functions[] = {initialize_matchmaking_system, start_matchmaking, view_matchmaking_queue};
-    while (run_menu("Scheduling and Matchmaking Management", matchmaking_menu, matchmaking_functions, 3)) {}
+    std::string matchmaking_menu[] = {"Initialize Matchmaking System", "Start Matchmaking", "View Matchmaking Queue", "View Ranking"};
+    FunctionPointer matchmaking_functions[] = {initialize_matchmaking_system, start_matchmaking, view_matchmaking_queue, view_ranking};
+    while (run_menu("Scheduling and Matchmaking Management", matchmaking_menu, matchmaking_functions, 4)) {}
     return true;
 }
 

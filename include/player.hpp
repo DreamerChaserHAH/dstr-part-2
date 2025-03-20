@@ -169,6 +169,5 @@ class CompetitionPlayerList{
             }
 
             return sorted_player_list;
-
         }
 };

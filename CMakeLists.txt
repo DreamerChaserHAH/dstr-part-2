@@ -10,7 +10,6 @@ add_library(qualifier-round-matchmaking-system src/tournament/qualifier-round-ma
 add_library(knockout-round-matchmaking-system src/tournament/knockout-round-matchmaking-system.cpp)
 
 add_library(tournament-scheduling-system src/tournament/tournament_schedule.cpp)
-target_link_libraries(tournament-scheduling-system enums)
 
 add_executable(task1 src/matchmaking-ui.cpp)
 

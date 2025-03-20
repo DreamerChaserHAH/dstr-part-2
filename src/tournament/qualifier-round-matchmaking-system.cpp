@@ -13,7 +13,7 @@ QualifierRoundMatchmakingSystem::QualifierRoundMatchmakingSystem(Player** player
 MatchesContainer* QualifierRoundMatchmakingSystem::matchmake() {
     int potential_remaining_players_after_matchmaking = this->number_of_remaining_players;
     int potential_players_in_queue = this->matchmaking_queue->number_of_remaining_players_in_queue;
-    if (potential_remaining_players_after_matchmaking == 8) {
+    if (potential_remaining_players_after_matchmaking == 8 && potential_players_in_queue == 8) {
         // the process of getting players is now completed, the other tournament class move to round robin stage
         set_is_completed(true);
         return nullptr;
@@ -31,8 +31,8 @@ MatchesContainer* QualifierRoundMatchmakingSystem::matchmake() {
     for (int i = 0; i < number_of_matches_to_be_made; i++) {
         Match new_match{};
         new_match.createMatch(QUALIFIER, matchmaking_queue->get_min(), matchmaking_queue->get_max());
-        matchmaking_queue->remove_min();
-        matchmaking_queue->remove_max();
+        matchmaking_queue->dequeue_min();
+        matchmaking_queue->dequeue_max();
         matches_container->matches[i] = new_match;
     }
 

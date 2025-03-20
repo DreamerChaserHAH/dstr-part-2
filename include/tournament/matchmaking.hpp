@@ -93,11 +93,11 @@ class PlayerDoubleEndedPriorityQueue {
 
         PlayerDoubleEndedPriorityQueue(Player** all_players, int number_of_players) {
             for (int i = 0; i < number_of_players; i++) {
-                put(all_players[i]);
+                enqueue(all_players[i]);
             }
         }
 
-        void put(Player* player) {
+        void enqueue(Player* player) {
                 PlayerDoubleEndedPriorityQueueNode* newNode = new PlayerDoubleEndedPriorityQueueNode{player, nullptr, nullptr};
 
                 if (head == nullptr) {
@@ -139,7 +139,7 @@ class PlayerDoubleEndedPriorityQueue {
             return tail->player;
         }
 
-        void remove_min() {
+        void dequeue_min() {
             if (head == nullptr) return;
 
             PlayerDoubleEndedPriorityQueueNode* temp = head;
@@ -153,7 +153,7 @@ class PlayerDoubleEndedPriorityQueue {
             this->number_of_remaining_players_in_queue--;
         }
 
-        void remove_max() {
+        void dequeue_max() {
             if (tail == nullptr) return;
 
             PlayerDoubleEndedPriorityQueueNode* temp = tail;
@@ -189,7 +189,7 @@ class PlayerDoubleEndedPriorityQueue {
                 left_current = left_current->next;
                 left_element++;
                 right_current = right_current->prev;
-                right_element++;
+                right_element--;
             }
         }
 
@@ -227,7 +227,7 @@ class QualifierRoundMatchmakingSystem : public BaseMatchmakingSystem{
         MatchesContainer* matchmake() override;
 
         void enqueue(Player* player) {
-            matchmaking_queue->put(player);
+            matchmaking_queue->enqueue(player);
         }
 
         void display_matchmaking_queue() override{
@@ -242,6 +242,7 @@ class QualifierRoundMatchmakingSystem : public BaseMatchmakingSystem{
 class RoundRobinRoundMatchmakingSystem : public BaseMatchmakingSystem {
     // the list of all players that are being considered
 
+    /// @brief Circular Queue Implementation for Round Robin Matches
     class RoundRobinGrouping {
         Player** players;
 
@@ -338,128 +339,6 @@ class RoundRobinRoundMatchmakingSystem : public BaseMatchmakingSystem {
         }
 };
 
-class KnockoutRoundMatchmakingSystem: public BaseMatchmakingSystem {
-
-    Player** knockout_round_queue;
-    int front = -1;
-    int last = 0;
-
-    Match* current_running_matches = nullptr;
-
-    int number_of_remaining_players;
-    int number_of_remaining_players_in_queue;
-
-    inline int move_to_next_index(int current_index) {
-        return (current_index + 1) % 32;
-    }
-
-    Player* dequeue() {
-        if (front == -1) {
-            // queue is empty
-            this->number_of_remaining_players_in_queue = 0;
-            return nullptr;
-        }
-        Player* player = knockout_round_queue[front];
-        this->number_of_remaining_players_in_queue--;
-        if (number_of_remaining_players_in_queue == 0) {
-            front = -1;
-        }else {
-            front = move_to_next_index(front);
-        }
-        return player;
-    }
-
-    Player* peek() {
-        if (front == -1) {
-            // queue is empty
-            return nullptr;
-        }
-        Player* player = knockout_round_queue[front];
-        return player;
-    }
-
-    public:
-        explicit KnockoutRoundMatchmakingSystem(Player** all_players) : BaseMatchmakingSystem(MATCH_TYPE::KNOCKOUT, all_players) {
-            knockout_round_queue = new Player*[32];
-            for (int i = 0; i < 32; i++) {
-                Player* player_to_add = all_players[i];
-                enqueue(player_to_add);
-            }
-            this->number_of_remaining_players = 32;
-            this->number_of_remaining_players_in_queue = 32;
-        }
-
-        void enqueue(Player* player) {
-            if (front == last) {
-                // queue is full
-                return;
-            }
-
-            if (front == -1) {
-                front = 0;
-            }
-
-            knockout_round_queue[last] = player;
-            this->number_of_remaining_players_in_queue++;
-            last = move_to_next_index(last);
-        }
-
-        MatchesContainer* matchmake() override {
-            //number of remaining players that will move onto the next stage
-            int potential_remaining_players_after_matchmaking = this->number_of_remaining_players;
-
-            //number of players that currently available to be matchmade
-            int potential_players_in_queue = this->number_of_remaining_players_in_queue;
-
-            if (potential_remaining_players_after_matchmaking == 0) {
-                // the process of getting players is now completed, the other tournament class move to round robin stage
-                set_is_completed(true);
-                return nullptr;
-            }
-
-            int number_of_matches_to_be_made = 0;
-            while (potential_players_in_queue > 0 && potential_remaining_players_after_matchmaking > 0) {
-                number_of_matches_to_be_made++;
-                potential_players_in_queue -= 2;
-                potential_remaining_players_after_matchmaking -= 1;
-            }
-
-            if (number_of_matches_to_be_made == 0) {
-                return nullptr;
-            }
-
-            auto* matches_container = new MatchesContainer;
-            matches_container->matches = new Match[number_of_matches_to_be_made];
-            for (int i = 0; i < number_of_matches_to_be_made; i++) {
-                Match new_match{};
-                Player* player1_info = dequeue();
-                Player* player2_info = dequeue();
-                new_match.createMatch(KNOCKOUT, player1_info, player2_info);
-                std::cout << player1_info->name << " " << player2_info->name << std::endl;
-                matches_container->matches[i] = new_match;
-            }
-
-            std::cout << "Number of Remaining Players : " << potential_remaining_players_after_matchmaking << std::endl;;
-            std::cout << "Matches Created : " << number_of_matches_to_be_made << std::endl;
-
-            this->number_of_remaining_players = potential_remaining_players_after_matchmaking;
-            matches_container->number_of_matches = number_of_matches_to_be_made;
-            return matches_container;
-        }
-
-        void display_matchmaking_queue() override {
-            int current_index = front;
-            for (int i = 0; i < number_of_remaining_players_in_queue; i++) {
-                std::cout << knockout_round_queue[current_index]->name << " " <<  knockout_round_queue[current_index]->rating << std::endl;
-                current_index = move_to_next_index(current_index);
-            }
-        }
-
-        Player** get_remaining_players() override {
-            return nullptr;
-        }
-};
-
 /// @brief records player ranking using "Stack" data structure
 class PlayerRanking {
     /// @brief container that stores the player ranking as Stack
@@ -467,36 +346,98 @@ class PlayerRanking {
 
     int maximum_number_of_elements;
     int index;
+
+    void print_player(Player* player) {
+        std::cout << std::setw(30) << player->name << std::setw(20) << player->rating << std::setw(20) << player->country_of_origin << std::endl;
+    };
+public:
+    PlayerRanking(int total_number_of_players) : maximum_number_of_elements(total_number_of_players), player_ranking_container(new Player*[total_number_of_players]), index(0) {}
+
+    void push(Player* player) {
+        if (index < 0 || index >= maximum_number_of_elements) {
+            throw std::out_of_range("PlayerRanking::push");
+        }
+        player_ranking_container[index] = player;
+        index++;
+    }
+
+    Player* pop() {
+        if (index - 1 < 0) {
+            throw std::out_of_range("PlayerRanking::pop");
+        }
+        index--;
+        return player_ranking_container[index];
+    }
+
+    void reset_to_top() {
+        index = maximum_number_of_elements;
+    }
+
+    Player* peek() {
+        if (index - 1 < 0) {
+            throw std::out_of_range("PlayerRanking::pop");
+        }
+        return player_ranking_container[index - 1];
+    }
+
+    ///First Place -> First Player
+    ///Second Place -> Second Player is the one that lost to second player in the final round
+    ///Third Place -> The one that lost to First Player and Second Player in the semi-final round
+    ///it goes in this pattern (1,1,2,4,8,16)
+    void display_ranking() {
+
+        std::cout << "**1st Place**" << std::endl;
+        print_player(pop());
+        std::cout << std::endl;
+
+        int counter = 2;
+        for (int i = 1; i <= 16; i = i *2) {
+            std::cout << "**"<<counter++ << " Place**" << std::endl;
+            for (int j = 0; j < i; j++) {
+                print_player(pop());
+            }
+        }
+        reset_to_top();
+    }
+};
+
+class KnockoutRoundMatchmakingSystem: public BaseMatchmakingSystem {
+
+    PlayerRanking* player_ranking;
+
+    PlayerDoubleEndedPriorityQueue* knockout_round_queue;
+
+    Match* current_running_matches = nullptr;
+
+    int number_of_remaining_players;
+
     public:
-        PlayerRanking(int total_number_of_players) : maximum_number_of_elements(total_number_of_players), player_ranking_container(new Player*[total_number_of_players]), index(0) {}
-
-        void push(Player* player) {
-            if (index < 0 || index >= maximum_number_of_elements) {
-                throw std::out_of_range("PlayerRanking::push");
-            }
-            player_ranking_container[index] = player;
-            index++;
+        explicit KnockoutRoundMatchmakingSystem(Player** all_players) : BaseMatchmakingSystem(MATCH_TYPE::KNOCKOUT, all_players) {
+            knockout_round_queue = new PlayerDoubleEndedPriorityQueue(all_players, 32);
+            this->number_of_remaining_players = 32;
+            player_ranking = new PlayerRanking(32);
         }
 
-        Player* pop() {
-            if (index - 1 < 0) {
-                throw std::out_of_range("PlayerRanking::pop");
-            }
-            index--;
-            return player_ranking_container[index];
+        void enqueue(Player* player) {
+            this->knockout_round_queue->enqueue(player);
         }
 
-        Player* peek() {
-            if (index - 1 < 0) {
-                throw std::out_of_range("PlayerRanking::pop");
-            }
-            return player_ranking_container[index];
+        void push_to_ranking(Player* player) {
+            player_ranking->push(player);
         }
 
         void display_ranking() {
-            for (int i = index; i >= 0; i--) {
-                std::cout << player_ranking_container[i]->name << std::endl;
-            }
+            player_ranking->display_ranking();
+        }
+
+        MatchesContainer* matchmake() override;
+
+        void display_matchmaking_queue() override {
+            this->knockout_round_queue->display_queue();
+        }
+
+        Player** get_remaining_players() override {
+            return nullptr;
         }
 };
 
@@ -519,7 +460,7 @@ class MatchmakingSystem {
 
     int total_number_of_players;
 
-    PlayerRanking* player_ranking;
+    bool completed = false;
 
     public:
 
@@ -527,7 +468,9 @@ class MatchmakingSystem {
         /// @return an array of matches
         void matchmake();
 
-        void add_player_back_to_matchmaking(Player* player);
+        void add_player_back_to_matchmaking(Player* winning_player, Player* losing_player);
+
+        void display_ranking();
 
         bool update_match_status(Match* target_match, MATCH_STATUS status);
 
