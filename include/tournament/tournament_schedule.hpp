@@ -39,6 +39,8 @@ class TournamentSchedulingSystem {
 
     MatchmakingSystem* matchmaking_system;
 
+    int number_of_schedules = 0;
+
     public:
         explicit TournamentSchedulingSystem();
 

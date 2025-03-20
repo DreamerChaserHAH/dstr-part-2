@@ -16,19 +16,7 @@ void TournamentSchedulingSystem::add_schedule(MatchesContainer* matches){
 
     int number_of_matches = matches->number_of_matches;
     for (int i = 0; i < number_of_matches; i++) {
-        auto* new_slot = new ScheduleSlot(&matches->matches[i], 0, MONDAY_MORNING, MAIN_COURT, nullptr);
-        if(this->head == nullptr){
-            // first element
-            this->head = new_slot;
-            this->tail = new_slot;
-        }else{
-            last_time_slot = get_next_time_slot(last_time_slot);
-            last_court = get_next_court(last_court);
-            new_slot->time_slot = last_time_slot;
-            new_slot->court = last_court;
-            this->tail->next_slot = new_slot;
-            this->tail = new_slot;
-        }
+        add_schedule(&matches->matches[i]);
     }
 }
 
@@ -49,6 +37,7 @@ void TournamentSchedulingSystem::add_schedule(Match* match) {
         this->tail->next_slot = new_slot;
         this->tail = new_slot;
     }
+    number_of_schedules++;
 }
 
 /// @brief dequeue the match to be played
@@ -56,6 +45,7 @@ ScheduleSlot* TournamentSchedulingSystem::deque_last_schedule(){
     if(head == nullptr){
         return nullptr;
     }
+    number_of_schedules--;
     ScheduleSlot* slot = head;
     head = head->next_slot;
     return slot;
@@ -73,6 +63,8 @@ void TournamentSchedulingSystem::print_schedule() {
     if (current_slot == nullptr) {
         std::cout << "Scheduling System is currently empty!" << std::endl;
     }
+
+    std::cout << "Number of Schedule Slots in the System: " << number_of_schedules << std::endl;
 
     std::cout << "Here's a upcoming list of schedule" << std::endl;
     std::cout << std::setw(20) << "Match ID" << std::setw(30) << "Player 1" << std::setw(30) << "Player 2" << std::setw(30) << "Schedule Timeslot" << std::setw(20) << "Court" << std::endl;
