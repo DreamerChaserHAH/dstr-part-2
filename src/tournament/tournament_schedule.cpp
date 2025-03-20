@@ -8,7 +8,7 @@ TournamentSchedulingSystem::TournamentSchedulingSystem(){
 
 /// @brief queue the match to be played
 /// @param match
-void TournamentSchedulingSystem::add_schedule(MatchesContainer* matches){
+void TournamentSchedulingSystem::push(MatchesContainer* matches){
     if (matches == nullptr) {
         std::cout << "There is no more matches to add!" << std::endl;
         return;
@@ -16,11 +16,11 @@ void TournamentSchedulingSystem::add_schedule(MatchesContainer* matches){
 
     int number_of_matches = matches->number_of_matches;
     for (int i = 0; i < number_of_matches; i++) {
-        add_schedule(&matches->matches[i]);
+        push(&matches->matches[i]);
     }
 }
 
-void TournamentSchedulingSystem::add_schedule(Match* match) {
+void TournamentSchedulingSystem::push(Match* match) {
     if (match == nullptr) {
         std::cout << "You are adding an invalid match" << std::endl;
     }
@@ -37,22 +37,20 @@ void TournamentSchedulingSystem::add_schedule(Match* match) {
         this->tail->next_slot = new_slot;
         this->tail = new_slot;
     }
-    number_of_schedules++;
 }
 
 /// @brief dequeue the match to be played
-ScheduleSlot* TournamentSchedulingSystem::deque_last_schedule(){
+ScheduleSlot* TournamentSchedulingSystem::dequeue(){
     if(head == nullptr){
         return nullptr;
     }
-    number_of_schedules--;
     ScheduleSlot* slot = head;
     head = head->next_slot;
     return slot;
 }
 
 /// @brief take a look at the next match to be played without removing it
-ScheduleSlot* TournamentSchedulingSystem::view_last_schedule(){
+ScheduleSlot* TournamentSchedulingSystem::peek(){
     return head;
 }
 
@@ -60,18 +58,18 @@ ScheduleSlot* TournamentSchedulingSystem::view_last_schedule(){
 void TournamentSchedulingSystem::print_schedule() {
     ScheduleSlot* current_slot = head;
 
+    int number_of_schedules = 0;
     if (current_slot == nullptr) {
         std::cout << "Scheduling System is currently empty!" << std::endl;
     }
-
-    std::cout << "Number of Schedule Slots in the System: " << number_of_schedules << std::endl;
-
     std::cout << "Here's a upcoming list of schedule" << std::endl;
-    std::cout << std::setw(20) << "Match ID" << std::setw(30) << "Player 1" << std::setw(30) << "Player 2" << std::setw(30) << "Schedule Timeslot" << std::setw(20) << "Court" << std::endl;
+    std::cout << std::setw(20) << "Match ID" << std::setw(30) << "Player 1" << std::setw(10) << "Rating" << std::setw(30) << "Player 2" << std::setw(10)  << "Rating" <<std::setw(30) << "Schedule Timeslot" << std::setw(20) << "Court" << std::endl;
     while(current_slot != nullptr){
-        std::cout << std::setw(20) << current_slot->match->match_id << std::setw(30) << current_slot->match->player1->name << std::setw(30) << current_slot->match->player2->name << std::setw(30) << get_schedule_string(current_slot->time_slot) << std::setw(20) << (current_slot->court == MAIN_COURT ? "MAIN COURT" : "SIDE COURT") << std::endl;
+        std::cout << std::setw(20) << current_slot->match->match_id << std::setw(30) << current_slot->match->player1->name << std::setw(10)  << current_slot->match->player1->rating << std::setw(30) << current_slot->match->player2->name << std::setw(10) << current_slot->match->player2->rating << std::setw(30) << get_schedule_string(current_slot->time_slot) << std::setw(20) << (current_slot->court == MAIN_COURT ? "MAIN COURT" : "SIDE COURT") << std::endl;
         current_slot = current_slot->next_slot;
+        number_of_schedules++;
     }
+    std::cout << "Total Scheduled Matches: " << number_of_schedules << std::endl;
 }
 
 void TournamentSchedulingSystem::print_last_schedule() {
@@ -82,12 +80,12 @@ void TournamentSchedulingSystem::print_last_schedule() {
     }
 
     std::cout << "Here's the last schedule" << std::endl;
-    std::cout << std::setw(20) << "Match ID" << std::setw(30) << "Player 1" << std::setw(30) << "Player 2" << std::setw(30) << "Schedule Timeslot" << std::setw(20) << "Court" << std::endl;
-    std::cout << std::setw(20) << current_slot->match->match_id << std::setw(30) << current_slot->match->player1->name << std::setw(30) << current_slot->match->player2->name << std::setw(30) << get_schedule_string(current_slot->time_slot) << std::setw(20) << (current_slot->court == MAIN_COURT ? "MAIN COURT" : "SIDE COURT") << std::endl;
+    std::cout << std::setw(20) << "Match ID" << std::setw(30) << "Player 1" << std::setw(10) << "Rating" << std::setw(30) << "Player 2" << std::setw(10)  << "Rating" <<std::setw(30) << "Schedule Timeslot" << std::setw(20) << "Court" << std::endl;
+    std::cout << std::setw(20) << current_slot->match->match_id << std::setw(30) << current_slot->match->player1->name << std::setw(10)  << current_slot->match->player1->rating << std::setw(30) << current_slot->match->player2->name << std::setw(10) << current_slot->match->player2->rating << std::setw(30) << get_schedule_string(current_slot->time_slot) << std::setw(20) << (current_slot->court == MAIN_COURT ? "MAIN COURT" : "SIDE COURT") << std::endl;
 }
 
 void TournamentSchedulingSystem::last_match_completed(MATCH_STATUS status) {
-    ScheduleSlot* current_slot = deque_last_schedule();
+    ScheduleSlot* current_slot = dequeue();
 
     if (current_slot == nullptr) {
         std::cout << "Scheduling System is currently empty!" << std::endl;

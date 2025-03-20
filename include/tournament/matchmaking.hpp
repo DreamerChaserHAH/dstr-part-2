@@ -29,17 +29,21 @@
 
 class TournamentSchedulingSystem;
 
-/// the base class that all 3 matchmaking system type will be depending on
+/// @brief the base class that all 3 matchmaking system type (QUALIFIER, ROUNDROBIN, KNOCKOUT) will be depending on
 class BaseMatchmakingSystem {
-    // check if this stage is completed or not
+
+    /// @brief check if this stage is completed or not
     bool is_completed;
-    // the type of match
+    /// @brief the type of match
     MATCH_TYPE match_type;
 
+    protected:
+        /// @brief all the players that will be considered for the knockout round
+        Player** all_players;
     public:
-    virtual ~BaseMatchmakingSystem() = default;
+        virtual ~BaseMatchmakingSystem() = default;
 
-    BaseMatchmakingSystem(MATCH_TYPE match_type) {
+        BaseMatchmakingSystem(MATCH_TYPE match_type, Player** all_players): all_players(all_players) {
             this->match_type = match_type;
             this->is_completed = false;
         }
@@ -60,128 +64,178 @@ class BaseMatchmakingSystem {
             return this->match_type;
         }
 
-        /// Matchmake with the information on hand
+        /// @brief matchmake with the information on hand
         virtual MatchesContainer* matchmake() = 0;
 
-        /// display the list of players that is being processed inside the queue
+        /// @brief display the players that are waiting to be considered for matchmaking in the queue
         virtual void display_matchmaking_queue() = 0;
 
-        /// @returns a 8 player list that are qualified from here
+        /// @returns a list of all the players that are qualified for this round
         virtual Player** get_remaining_players() = 0;
+};
+
+/// @brief The node that will be used in the class below
+struct PlayerDoubleEndedPriorityQueueNode{
+    Player* player = nullptr;
+    PlayerDoubleEndedPriorityQueueNode* next = nullptr;
+    PlayerDoubleEndedPriorityQueueNode* prev = nullptr;
+};
+
+/// @brief The double ended priority queue that will be used to queue the players for the qualifier round and knock out round.
+/// In order to have interesting matches, the players will be queued based on their tennis rating.
+/// Strongest Player will be paired with the weakest player
+class PlayerDoubleEndedPriorityQueue {
+    PlayerDoubleEndedPriorityQueueNode* head;
+    PlayerDoubleEndedPriorityQueueNode* tail;
+
+    public:
+        int number_of_remaining_players_in_queue = 0;
+
+        PlayerDoubleEndedPriorityQueue(Player** all_players, int number_of_players) {
+            for (int i = 0; i < number_of_players; i++) {
+                put(all_players[i]);
+            }
+        }
+
+        void put(Player* player) {
+                PlayerDoubleEndedPriorityQueueNode* newNode = new PlayerDoubleEndedPriorityQueueNode{player, nullptr, nullptr};
+
+                if (head == nullptr) {
+                    head = tail = newNode;
+                } else {
+                    PlayerDoubleEndedPriorityQueueNode* current = head;
+                    while (current != nullptr && current->player->rating < player->rating) {
+                        current = current->next;
+                    }
+
+                    if (current == nullptr) {
+                        // Insert at the end
+                        tail->next = newNode;
+                        newNode->prev = tail;
+                        tail = newNode;
+                    } else if (current == head) {
+                        // Insert at the beginning
+                        newNode->next = head;
+                        head->prev = newNode;
+                        head = newNode;
+                    } else {
+                        // Insert in the middle
+                        newNode->next = current;
+                        newNode->prev = current->prev;
+                        current->prev->next = newNode;
+                        current->prev = newNode;
+                    }
+                }
+                this->number_of_remaining_players_in_queue++;
+            }
+
+        Player* get_min() {
+            if (head == nullptr) return nullptr;
+            return head->player;
+        }
+
+        Player* get_max() {
+            if (tail == nullptr) return nullptr;
+            return tail->player;
+        }
+
+        void remove_min() {
+            if (head == nullptr) return;
+
+            PlayerDoubleEndedPriorityQueueNode* temp = head;
+            head = head->next;
+            if (head != nullptr) {
+                head->prev = nullptr;
+            } else {
+                tail = nullptr; // The queue is now empty
+            }
+            delete temp;
+            this->number_of_remaining_players_in_queue--;
+        }
+
+        void remove_max() {
+            if (tail == nullptr) return;
+
+            PlayerDoubleEndedPriorityQueueNode* temp = tail;
+            tail = tail->prev;
+            if (tail != nullptr) {
+                tail->next = nullptr;
+            } else {
+                head = nullptr; // The queue is now empty
+            }
+            delete temp;
+            this->number_of_remaining_players_in_queue--;
+        }
+
+        bool is_empty() {
+            return head == nullptr;
+        }
+
+        /// display the queue in this fashion, from the left, and then from the right, and then loop
+        // it should only do until the middle, because the other half is the same as the first half
+        void display_queue() {
+
+            int left_element = 0;
+            int right_element = number_of_remaining_players_in_queue - 1;
+            PlayerDoubleEndedPriorityQueueNode* left_current = head;
+            PlayerDoubleEndedPriorityQueueNode* right_current = tail;
+
+            // Traverse from both ends until the pointers meet or cross
+            while (left_current != nullptr && right_current != nullptr && left_element < right_element) {
+                std::cout << left_current->player->name << " (" << left_current->player->rating << ") vs "
+                          << right_current->player->name << " (" << right_current->player->rating << ")" << std::endl;
+
+                // Move left pointer forward and right pointer backward
+                left_current = left_current->next;
+                left_element++;
+                right_current = right_current->prev;
+                right_element++;
+            }
+        }
+
+        Player** get_remaining_players() {
+            Player** remaining_players = new Player*[number_of_remaining_players_in_queue];
+            PlayerDoubleEndedPriorityQueueNode* current = head;
+            int i = 0;
+            while (current != nullptr) {
+                remaining_players[i] = current->player;
+                current = current->next;
+                i++;
+            }
+            return remaining_players;
+        }
 };
 
 /// @brief single qualifying round that qualify the players to the next round (Circular Queue)
 class QualifierRoundMatchmakingSystem : public BaseMatchmakingSystem{
 
-    ///A list of all the players that are being considered
-    Player** all_players;
     ///A list of players that will be considered for the current matchmaking round
-    Player** matchmaking_free_queue = nullptr;
+    PlayerDoubleEndedPriorityQueue* matchmaking_queue;
 
     /// number of remaining players in the list
-
-    int number_of_remaining_players_in_queue = 0;
     int number_of_remaining_players = 0;
     int number_of_total_qualifying_players = 0;
 
-    int front = 0;
-    int last = 0;
-
     Match* current_running_matches = nullptr;
 
-    inline int move_to_next_index(int current_index) {
-        return (current_index + 1) % number_of_total_qualifying_players;
-    }
-
-    Player* dequeue() {
-        if (front == last) {
-            // queue is empty
-            return nullptr;
-        }
-        Player* player = matchmaking_free_queue[front];
-        front = move_to_next_index(front);
-        this->number_of_remaining_players_in_queue--;
-        return player;
-    }
-
-    Player* peek() {
-        if (front == last) {
-            // queue is empty
-            return nullptr;
-        }
-        Player* player = matchmaking_free_queue[front];
-        return player;
-    }
-
     public:
-        QualifierRoundMatchmakingSystem(Player** player_list, int number_of_qualifying_players) : BaseMatchmakingSystem(QUALIFIER){
-            this->all_players = player_list;
-            this->matchmaking_free_queue = new Player*[number_of_qualifying_players];
-            for(int i = 0; i < number_of_qualifying_players; i++){
-                int current_index = i % 2 == 0 ? (i == 0? 0: i/2) : (number_of_qualifying_players - 1) - (i/2);
-                player_list[current_index]->performance.current_round = MATCH_TYPE::QUALIFIER;
-                enqueue(player_list[current_index]);
-            }
-            this->number_of_total_qualifying_players = number_of_qualifying_players;
-            this->number_of_remaining_players = number_of_qualifying_players;
-            this->number_of_remaining_players_in_queue = number_of_qualifying_players;
-        }
 
-        /// @returns a list of all the matches that can be made and schedule right now
-        MatchesContainer* matchmake() override{
-            int potential_remaining_players_after_matchmaking = this->number_of_remaining_players;
-            int potential_players_in_queue = this->number_of_remaining_players_in_queue;
-            if (potential_remaining_players_after_matchmaking == 8) {
-                // the process of getting players is now completed, the other tournament class move to round robin stage
-                set_is_completed(true);
-                return nullptr;
-            }
+        /// @brief setup the Qualifier Round Matchmaking System
+        QualifierRoundMatchmakingSystem(Player** player_list, int number_of_qualifying_players);
 
-            int number_of_matches_to_be_made = 0;
-            while (potential_remaining_players_after_matchmaking > 8 && potential_players_in_queue > 0) {
-                number_of_matches_to_be_made++;
-                potential_players_in_queue -= 2;
-                potential_remaining_players_after_matchmaking -= 1;
-            }
-
-            auto* matches_container = new MatchesContainer;
-            matches_container->matches = new Match[number_of_matches_to_be_made];
-            for (int i = 0; i < number_of_matches_to_be_made; i++) {
-                Match new_match{};
-                new_match.createMatch(QUALIFIER, dequeue(), dequeue());
-                matches_container->matches[i] = new_match;
-            }
-
-            std::cout << "Number of Remaining Players : " << this->number_of_remaining_players << std::endl;;
-            std::cout << "Matches Created : " << number_of_matches_to_be_made << std::endl;
-
-            this->number_of_remaining_players = potential_remaining_players_after_matchmaking;
-            matches_container->number_of_matches = number_of_matches_to_be_made;
-            return matches_container;
-        }
-
-
+        /// @returns a list of all the matches that can be made and schedule right now with the players in the queue
+        MatchesContainer* matchmake() override;
 
         void enqueue(Player* player) {
-            if (front == move_to_next_index(last)) {
-                // queue is full
-                return;
-            }
-            matchmaking_free_queue[last] = player;
-            this->number_of_remaining_players_in_queue++;
-            last = move_to_next_index(last);
+            matchmaking_queue->put(player);
         }
 
         void display_matchmaking_queue() override{
-            int current_index = front;
-            for (int i = 0; i < number_of_remaining_players_in_queue; i++) {
-                std::cout << matchmaking_free_queue[current_index]->name << " " <<  matchmaking_free_queue[current_index]->rating << std::endl;
-                current_index = move_to_next_index(current_index);
-            }
+            matchmaking_queue->display_queue();
         }
 
         Player** get_remaining_players() override{
-            return matchmaking_free_queue;
+            return matchmaking_queue->get_remaining_players();
         }
 };
 
@@ -240,15 +294,11 @@ class RoundRobinRoundMatchmakingSystem : public BaseMatchmakingSystem {
 
     };
 
-    Player** all_players;
-
     bool match_made = false;
     bool round_ended = false;
 
     public:
-        explicit RoundRobinRoundMatchmakingSystem(Player** players) : BaseMatchmakingSystem(ROUNDROBIN) {
-            this->all_players = players;
-        }
+        explicit RoundRobinRoundMatchmakingSystem(Player** all_players) : BaseMatchmakingSystem(ROUNDROBIN, all_players) {}
 
         /// @returns a list of all the matches that can be made and schedule right now
         MatchesContainer* matchmake() override{
@@ -290,9 +340,6 @@ class RoundRobinRoundMatchmakingSystem : public BaseMatchmakingSystem {
 
 class KnockoutRoundMatchmakingSystem: public BaseMatchmakingSystem {
 
-    /// all the players that will be considered for the knockout round
-    Player** all_players;
-
     Player** knockout_round_queue;
     int front = -1;
     int last = 0;
@@ -332,11 +379,10 @@ class KnockoutRoundMatchmakingSystem: public BaseMatchmakingSystem {
     }
 
     public:
-        explicit KnockoutRoundMatchmakingSystem(Player** players) : BaseMatchmakingSystem(MATCH_TYPE::KNOCKOUT) {
-            this->all_players = players;
+        explicit KnockoutRoundMatchmakingSystem(Player** all_players) : BaseMatchmakingSystem(MATCH_TYPE::KNOCKOUT, all_players) {
             knockout_round_queue = new Player*[32];
             for (int i = 0; i < 32; i++) {
-                Player* player_to_add = players[i];
+                Player* player_to_add = all_players[i];
                 enqueue(player_to_add);
             }
             this->number_of_remaining_players = 32;

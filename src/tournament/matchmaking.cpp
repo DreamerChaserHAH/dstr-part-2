@@ -44,7 +44,7 @@ void MatchmakingSystem::matchmake() {
                 break;
             case ROUNDROBIN:
                 // check if the scheduling system is empty or not
-                if (tournament_scheduling_system->view_last_schedule() != nullptr) {
+                if (tournament_scheduling_system->peek() != nullptr) {
                     std::cout << "All matches inside Round Robin Stage must be completed before the matchmaking system can proceed to the next round" << std::endl;
                     break;
                 }
@@ -58,7 +58,7 @@ void MatchmakingSystem::matchmake() {
         }
     }
 
-    tournament_scheduling_system->add_schedule(matches_container);
+    tournament_scheduling_system->push(matches_container);
 }
 
 void MatchmakingSystem::add_player_back_to_matchmaking(Player* player) {
@@ -90,7 +90,7 @@ bool MatchmakingSystem::update_match_status(Match* target_match, MATCH_STATUS st
                     default:
                     auto* rematch = new Match;
                     rematch->createMatch(target_match->match_type, target_match->player1, target_match->player2);
-                    tournament_scheduling_system->add_schedule(rematch);
+                    tournament_scheduling_system->push(rematch);
                 break;
             }
             break;

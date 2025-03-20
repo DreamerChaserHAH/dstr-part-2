@@ -155,7 +155,7 @@ inline bool update_current_match_status() {
         return true;
     }
 
-    ScheduleSlot* last_schedule_slot = tournament_scheduling_system->view_last_schedule();
+    ScheduleSlot* last_schedule_slot = tournament_scheduling_system->peek();
     if (last_schedule_slot == nullptr) {
         std::cout << "There is no schedules anymore, run matchmaking system again!" << std::endl;
         return true;
