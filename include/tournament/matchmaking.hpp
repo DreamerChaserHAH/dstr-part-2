@@ -33,9 +33,9 @@ class TournamentSchedulingSystem;
 class BaseMatchmakingSystem {
 
     /// @brief check if this stage is completed or not
-    bool is_completed;
+    bool is_completed = false;
     /// @brief the type of match
-    MATCH_TYPE match_type;
+    MATCH_TYPE match_type = UNDEFINED;
 
     protected:
         /// @brief all the players that will be considered for the knockout round
@@ -85,8 +85,8 @@ struct PlayerDoubleEndedPriorityQueueNode{
 /// In order to have interesting matches, the players will be queued based on their tennis rating.
 /// Strongest Player will be paired with the weakest player
 class PlayerDoubleEndedPriorityQueue {
-    PlayerDoubleEndedPriorityQueueNode* head;
-    PlayerDoubleEndedPriorityQueueNode* tail;
+    PlayerDoubleEndedPriorityQueueNode* head = nullptr;
+    PlayerDoubleEndedPriorityQueueNode* tail = nullptr;
 
     public:
         int number_of_remaining_players_in_queue = 0;
@@ -210,7 +210,7 @@ class PlayerDoubleEndedPriorityQueue {
 class QualifierRoundMatchmakingSystem : public BaseMatchmakingSystem{
 
     ///A list of players that will be considered for the current matchmaking round
-    PlayerDoubleEndedPriorityQueue* matchmaking_queue;
+    PlayerDoubleEndedPriorityQueue* matchmaking_queue = nullptr;
 
     /// number of remaining players in the list
     int number_of_remaining_players = 0;
@@ -347,7 +347,7 @@ class RoundRobinRoundMatchmakingSystem : public BaseMatchmakingSystem {
 /// @brief records player ranking using "Stack" data structure
 class PlayerRanking {
     /// @brief container that stores the player ranking as Stack
-    Player** player_ranking_container;
+    Player** player_ranking_container = nullptr;
 
     int maximum_number_of_elements;
     int index;
@@ -408,9 +408,9 @@ public:
 
 class KnockoutRoundMatchmakingSystem: public BaseMatchmakingSystem {
 
-    PlayerRanking* player_ranking;
+    PlayerRanking* player_ranking = nullptr;
 
-    PlayerDoubleEndedPriorityQueue* knockout_round_queue;
+    PlayerDoubleEndedPriorityQueue* knockout_round_queue = nullptr;
 
     Match* current_running_matches = nullptr;
 
@@ -447,7 +447,7 @@ class KnockoutRoundMatchmakingSystem: public BaseMatchmakingSystem {
 class MatchmakingSystem {
 
     /// @brief A list of players that are still within the game (sorted)
-    Player** player_list;
+    Player** player_list = nullptr;
 
     /// <summary>
     /// The type of matches that are currently running
@@ -458,9 +458,9 @@ class MatchmakingSystem {
 
     TournamentSchedulingSystem* tournament_scheduling_system = nullptr;
 
-    int number_of_qualifier_round_players;
+    int number_of_qualifier_round_players = -1;
 
-    int total_number_of_players;
+    int total_number_of_players = -1;
 
     bool completed = false;
 

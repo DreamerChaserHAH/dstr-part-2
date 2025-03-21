@@ -32,9 +32,9 @@ struct ScheduleSlot{
 class TournamentSchedulingSystem {
 
     /// @brief the first element to be removed
-    ScheduleSlot* head;
+    ScheduleSlot* head = nullptr;
     /// @brief the last element to be removed
-    ScheduleSlot* tail;
+    ScheduleSlot* tail = nullptr;
 
     /// @brief the last time slot and court used
     SCHEDULE_TIME_SLOT last_time_slot = MONDAY_MORNING;
@@ -42,7 +42,7 @@ class TournamentSchedulingSystem {
     TOURNAMENT_COURT last_court = MAIN_COURT;
 
     /// @brief the matchmaking system that is used together with this system
-    MatchmakingSystem* matchmaking_system;
+    MatchmakingSystem* matchmaking_system = nullptr;
 
     public:
         explicit TournamentSchedulingSystem();

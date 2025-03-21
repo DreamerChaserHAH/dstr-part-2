@@ -6,6 +6,7 @@
 #include <sstream>
 #include "tournament/enums.hpp"
 #include <algorithm>
+#include <iomanip>
 
 struct TournamentPerformance {
     int total_matches_played = 0;
@@ -18,17 +19,17 @@ struct TournamentPerformance {
 
 struct Player{
     /// @brief player id
-    int id;
+    int id = -1;
     /// @brief Player's name
-    std::string name;
+    std::string name = "";
     /// @brief Player's age
-    int age;
+    int age = -1;
     /// @brief  the country where the player is from
-    std::string country_of_origin;
+    std::string country_of_origin = "";
     /// @brief the type of the player
-    PLAYER_TYPE player_type;
+    PLAYER_TYPE player_type = PLAYER_TYPE::NORMAL;
     /// @brief the initial tennis rating of the player
-    int rating;
+    int rating = -1;
     /// @brief the performance of the player
     TournamentPerformance performance;
 };
