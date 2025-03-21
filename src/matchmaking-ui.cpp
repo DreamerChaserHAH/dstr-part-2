@@ -3,6 +3,10 @@
 #include "player.hpp"
 #include "tournament/matchmaking.hpp"
 #include "tournament/tournament_schedule.hpp"
+#include "tournament/match_history.hpp"
+
+
+
 
 typedef bool (*FunctionPointer)();
 
@@ -10,6 +14,7 @@ CompetitionPlayerList* player_list = nullptr;
 TournamentSchedulingSystem* tournament_scheduling_system = nullptr;
 MatchmakingSystem* matchmaking_system = nullptr;
 MATCH_STATUS result_status_buffer;
+MatchHistoryQueue* match_history_queue = new MatchHistoryQueue();
 
 inline bool initialize_matchmaking_system() {
     if (player_list == nullptr) {
@@ -188,6 +193,8 @@ inline bool update_current_match_status() {
     }
     tournament_scheduling_system->print_last_schedule();
     tournament_scheduling_system->last_match_completed(result_status_buffer);
+    match_history_queue->enqueue(last_schedule_slot->match, result_status_buffer);
+
     return true;
 }
 
@@ -204,11 +211,29 @@ bool player_menu(){
     while (run_menu("Player Management", player_menu, player_functions, 5)) {}
     return true;
 }
+bool view_match_history() {
+    match_history_queue->displayHistory();
+    return true;
+}
+
+bool save_match_history() {
+    match_history_queue->saveHistoryToFile("match_history.csv");
+    return true;
+}
+bool match_history_menu() {
+    std::string match_history_options[] = {"View Match History", "Save Match History to File"};
+    FunctionPointer match_history_functions[] = {view_match_history, save_match_history};
+    while (run_menu("Match History Management", match_history_options, match_history_functions, 2)) {}
+    return true;
+}
+
 
 int main(){
      std::cout << "Welcome to APU Tennis Tournament Management System" << std::endl;
-     std::string main_menu[] = {"Matchmaking Management", "Schedule Management System", "Player Management"};
-     FunctionPointer main_functions[] = {matchmaking_menu, scheduling_menu, player_menu};
-     while (run_menu("Main Menu", main_menu, main_functions, 3)) {}
+     std::string main_menu[] = {
+         "Matchmaking Management", "Schedule Management System", "Player Management", "Match History Management"
+     };
+    FunctionPointer main_functions[] = {matchmaking_menu, scheduling_menu, player_menu, match_history_menu};
+     while (run_menu("Main Menu", main_menu, main_functions, 4)) {}
     return 0;
 }

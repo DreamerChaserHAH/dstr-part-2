@@ -7,7 +7,10 @@ include_directories(include)
 
 add_library(matchmaking-system src/tournament/matchmaking.cpp)
 add_library(qualifier-round-matchmaking-system src/tournament/qualifier-round-matchmaking-system.cpp)
-add_library(knockout-round-matchmaking-system src/tournament/knockout-round-matchmaking-system.cpp)
+add_library(knockout-round-matchmaking-system src/tournament/knockout-round-matchmaking-system.cpp
+        src/tournament/match_history.cpp
+        include/tournament/match_history.hpp
+)
 
 add_library(tournament-scheduling-system src/tournament/tournament_schedule.cpp)
 

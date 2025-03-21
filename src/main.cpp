@@ -2,6 +2,8 @@
 #include "tournament/tournament_schedule.hpp"
 #include "player.hpp"
 #include "tournament/matchmaking.hpp"
+#include "tournament/match_history.hpp"
+
 
 int main() {
     CompetitionPlayerList player_list = CompetitionPlayerList("../data/tennis-tournament-players.csv");
