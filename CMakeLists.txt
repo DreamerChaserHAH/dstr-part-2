@@ -11,9 +11,10 @@ add_library(knockout-round-matchmaking-system src/tournament/knockout-round-matc
         src/tournament/match_history.cpp
         include/tournament/match_history.hpp
 )
-
 add_library(tournament-scheduling-system src/tournament/tournament_schedule.cpp)
 
-add_executable(task1 src/matchmaking-ui.cpp)
+add_executable(task1 src/main.cpp)
 
-target_link_libraries(task1 tournament-scheduling-system matchmaking-system qualifier-round-matchmaking-system knockout-round-matchmaking-system)
+add_library(ticketing-sales src/tickets/Customer.cpp src/tickets/CustomPriorityQueue.cpp "src/tickets/Ticketing Sales.cpp")
+
+target_link_libraries(task1 tournament-scheduling-system matchmaking-system qualifier-round-matchmaking-system knockout-round-matchmaking-system ticketing-sales)
