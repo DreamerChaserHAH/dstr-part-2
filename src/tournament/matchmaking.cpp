@@ -44,6 +44,18 @@ MatchesContainer* QualifierRoundMatchmakingSystem::matchmake() {
     return matches_container;
 }
 
+void QualifierRoundMatchmakingSystem::enqueue(Player* player) {
+    matchmaking_queue->enqueue(player);
+}
+
+void QualifierRoundMatchmakingSystem::display_matchmaking_queue() {
+    matchmaking_queue->display_queue();
+}
+
+Player **QualifierRoundMatchmakingSystem::get_remaining_players() {
+    return matchmaking_queue->get_remaining_players();
+}
+
 KnockoutRoundMatchmakingSystem::KnockoutRoundMatchmakingSystem(Player** all_players) : BaseMatchmakingSystem(MATCH_TYPE::KNOCKOUT, all_players) {
     knockout_round_queue = new PlayerDoubleEndedPriorityQueue(all_players, 32);
     this->number_of_remaining_players = 32;
@@ -97,6 +109,27 @@ MatchesContainer* KnockoutRoundMatchmakingSystem::matchmake() {
     this->number_of_remaining_players = potential_remaining_players_after_matchmaking;
     matches_container->number_of_matches = number_of_matches_to_be_made;
     return matches_container;
+}
+
+void KnockoutRoundMatchmakingSystem::enqueue(Player *player) {
+    this->knockout_round_queue->enqueue(player);
+}
+
+void KnockoutRoundMatchmakingSystem::push_to_ranking(Player* player) {
+    player_ranking->push(player);
+
+}
+
+void KnockoutRoundMatchmakingSystem::display_ranking() {
+    player_ranking->display_ranking();
+}
+
+void KnockoutRoundMatchmakingSystem::display_matchmaking_queue() {
+    this->knockout_round_queue->display_queue();
+}
+
+Player **KnockoutRoundMatchmakingSystem::get_remaining_players() {
+    return nullptr;
 }
 
 MatchmakingSystem::MatchmakingSystem(Player** player_list, int number_of_players, TournamentSchedulingSystem* tss){

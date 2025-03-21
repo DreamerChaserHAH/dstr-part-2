@@ -29,6 +29,68 @@
 
 class TournamentSchedulingSystem;
 
+/// @brief records player ranking using "Stack" data structure
+class PlayerRanking {
+    /// @brief container that stores the player ranking as Stack
+    Player** player_ranking_container = nullptr;
+
+    int maximum_number_of_elements;
+    int index;
+
+    void print_player(Player* player) {
+        std::cout << std::setw(30) << player->name << std::setw(20) << player->rating << std::setw(20) << player->country_of_origin << std::endl;
+    };
+public:
+    PlayerRanking(int total_number_of_players) : maximum_number_of_elements(total_number_of_players), player_ranking_container(new Player*[total_number_of_players]), index(0) {}
+
+    void push(Player* player) {
+        if (index < 0 || index >= maximum_number_of_elements) {
+            throw std::out_of_range("PlayerRanking::push");
+        }
+        player_ranking_container[index] = player;
+        index++;
+    }
+
+    Player* pop() {
+        if (index - 1 < 0) {
+            throw std::out_of_range("PlayerRanking::pop");
+        }
+        index--;
+        return player_ranking_container[index];
+    }
+
+    void reset_to_top() {
+        index = maximum_number_of_elements;
+    }
+
+    Player* peek() {
+        if (index - 1 < 0) {
+            throw std::out_of_range("PlayerRanking::pop");
+        }
+        return player_ranking_container[index - 1];
+    }
+
+    ///First Place -> First Player
+    ///Second Place -> Second Player is the one that lost to second player in the final round
+    ///Third Place -> The one that lost to First Player and Second Player in the semi-final round
+    ///it goes in this pattern (1,1,2,4,8,16)
+    void display_ranking() {
+
+        std::cout << "**1st Place**" << std::endl;
+        print_player(pop());
+        std::cout << std::endl;
+
+        int counter = 2;
+        for (int i = 1; i <= 16; i = i *2) {
+            std::cout << "**"<<counter++ << " Place**" << std::endl;
+            for (int j = 0; j < i; j++) {
+                print_player(pop());
+            }
+        }
+        reset_to_top();
+    }
+};
+
 /// @brief the base class that all 3 matchmaking system type (QUALIFIER, ROUNDROBIN, KNOCKOUT) will be depending on
 class BaseMatchmakingSystem {
 
@@ -97,6 +159,14 @@ class PlayerDoubleEndedPriorityQueue {
             }
         }
 
+        ~PlayerDoubleEndedPriorityQueue() {
+            while (head) {
+                PlayerDoubleEndedPriorityQueueNode* temp = head;
+                head = head->next;
+                delete temp;
+            }
+        }
+
         void enqueue(Player* player) {
                 PlayerDoubleEndedPriorityQueueNode* newNode = new PlayerDoubleEndedPriorityQueueNode{player, nullptr, nullptr};
 
@@ -104,7 +174,7 @@ class PlayerDoubleEndedPriorityQueue {
                     head = tail = newNode;
                 } else {
                     PlayerDoubleEndedPriorityQueueNode* current = head;
-                    while (current != nullptr && current->player->rating < player->rating) {
+                    while (current != nullptr && current->player->rating <= player->rating) {
                         current = current->next;
                     }
 
@@ -181,7 +251,7 @@ class PlayerDoubleEndedPriorityQueue {
             PlayerDoubleEndedPriorityQueueNode* right_current = tail;
 
             // Traverse from both ends until the pointers meet or cross
-            while (left_current != nullptr && right_current != nullptr && left_element < right_element) {
+            while (left_current != nullptr && right_current != nullptr && left_element <= right_element) {
                 std::cout << left_current->player->name << " (" << left_current->player->rating << ") vs "
                           << right_current->player->name << " (" << right_current->player->rating << ")" << std::endl;
 
@@ -226,17 +296,11 @@ class QualifierRoundMatchmakingSystem : public BaseMatchmakingSystem{
         /// @returns a list of all the matches that can be made and schedule right now with the players in the queue
         MatchesContainer* matchmake() override;
 
-        void enqueue(Player* player) {
-            matchmaking_queue->enqueue(player);
-        }
+        void enqueue(Player* player);
 
-        void display_matchmaking_queue() override{
-            matchmaking_queue->display_queue();
-        }
+        void display_matchmaking_queue() override;
 
-        Player** get_remaining_players() override{
-            return matchmaking_queue->get_remaining_players();
-        }
+        Player** get_remaining_players() override;
 };
 
 class RoundRobinRoundMatchmakingSystem : public BaseMatchmakingSystem {
@@ -344,68 +408,6 @@ class RoundRobinRoundMatchmakingSystem : public BaseMatchmakingSystem {
         }
 };
 
-/// @brief records player ranking using "Stack" data structure
-class PlayerRanking {
-    /// @brief container that stores the player ranking as Stack
-    Player** player_ranking_container = nullptr;
-
-    int maximum_number_of_elements;
-    int index;
-
-    void print_player(Player* player) {
-        std::cout << std::setw(30) << player->name << std::setw(20) << player->rating << std::setw(20) << player->country_of_origin << std::endl;
-    };
-public:
-    PlayerRanking(int total_number_of_players) : maximum_number_of_elements(total_number_of_players), player_ranking_container(new Player*[total_number_of_players]), index(0) {}
-
-    void push(Player* player) {
-        if (index < 0 || index >= maximum_number_of_elements) {
-            throw std::out_of_range("PlayerRanking::push");
-        }
-        player_ranking_container[index] = player;
-        index++;
-    }
-
-    Player* pop() {
-        if (index - 1 < 0) {
-            throw std::out_of_range("PlayerRanking::pop");
-        }
-        index--;
-        return player_ranking_container[index];
-    }
-
-    void reset_to_top() {
-        index = maximum_number_of_elements;
-    }
-
-    Player* peek() {
-        if (index - 1 < 0) {
-            throw std::out_of_range("PlayerRanking::pop");
-        }
-        return player_ranking_container[index - 1];
-    }
-
-    ///First Place -> First Player
-    ///Second Place -> Second Player is the one that lost to second player in the final round
-    ///Third Place -> The one that lost to First Player and Second Player in the semi-final round
-    ///it goes in this pattern (1,1,2,4,8,16)
-    void display_ranking() {
-
-        std::cout << "**1st Place**" << std::endl;
-        print_player(pop());
-        std::cout << std::endl;
-
-        int counter = 2;
-        for (int i = 1; i <= 16; i = i *2) {
-            std::cout << "**"<<counter++ << " Place**" << std::endl;
-            for (int j = 0; j < i; j++) {
-                print_player(pop());
-            }
-        }
-        reset_to_top();
-    }
-};
-
 class KnockoutRoundMatchmakingSystem: public BaseMatchmakingSystem {
 
     PlayerRanking* player_ranking = nullptr;
@@ -420,27 +422,17 @@ class KnockoutRoundMatchmakingSystem: public BaseMatchmakingSystem {
 
         KnockoutRoundMatchmakingSystem(Player** all_players);
 
-        void enqueue(Player* player) {
-            this->knockout_round_queue->enqueue(player);
-        }
+        void enqueue(Player* player);
 
-        void push_to_ranking(Player* player) {
-            player_ranking->push(player);
-        }
+        void push_to_ranking(Player* player);
 
-        void display_ranking() {
-            player_ranking->display_ranking();
-        }
+        void display_ranking();
 
         MatchesContainer* matchmake() override;
 
-        void display_matchmaking_queue() override {
-            this->knockout_round_queue->display_queue();
-        }
+        void display_matchmaking_queue() override;
 
-        Player** get_remaining_players() override {
-            return nullptr;
-        }
+        Player** get_remaining_players() override;
 };
 
 /// @brief the Matchmaking System that is used to matchmake between two players while managing the different stages of the game
