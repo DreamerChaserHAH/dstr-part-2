@@ -135,7 +135,8 @@ bool run_menu(std::string context, std::string menu_name[], FunctionPointer func
     std::cout << "0. Exit" << std::endl;
     std::cout << ">";
     int input;
-    if(std::cin >> input){
+    std::cin >> input;
+    if(not std::cin.fail()){
 
         if (input == 0) {
             return false;
@@ -148,6 +149,9 @@ bool run_menu(std::string context, std::string menu_name[], FunctionPointer func
 
         return functions[input - 1]();
     }
+    std::cin.clear();
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    std::cout << "Invalid input! Input must be numerical" << std::endl;
     return true;
 }
 
