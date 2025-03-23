@@ -70,4 +70,8 @@ class TournamentSchedulingSystem {
         void last_match_completed(MATCH_STATUS status);
 
         void update_matchmaking_system(MatchmakingSystem* matchmaking_system);
+
+        void remove_player(int player_id);
+
+        void read_player(Player* player);
 };

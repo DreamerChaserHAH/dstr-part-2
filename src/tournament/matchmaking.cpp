@@ -13,14 +13,14 @@ QualifierRoundMatchmakingSystem::QualifierRoundMatchmakingSystem(Player** player
 MatchesContainer* QualifierRoundMatchmakingSystem::matchmake() {
     int potential_remaining_players_after_matchmaking = this->number_of_remaining_players;
     int potential_players_in_queue = this->matchmaking_queue->number_of_remaining_players_in_queue;
-    if (potential_remaining_players_after_matchmaking == 8 && potential_players_in_queue == 8) {
+    if (potential_remaining_players_after_matchmaking <= 8 && potential_players_in_queue == 8) {
         // the process of getting players is now completed, the other tournament class move to round robin stage
         set_is_completed(true);
         return nullptr;
     }
 
     int number_of_matches_to_be_made = 0;
-    while (potential_remaining_players_after_matchmaking > 8 && potential_players_in_queue > 0) {
+    while (potential_remaining_players_after_matchmaking >= 8 && potential_players_in_queue > 0) {
         number_of_matches_to_be_made++;
         potential_players_in_queue -= 2;
         potential_remaining_players_after_matchmaking -= 1;
@@ -36,6 +36,7 @@ MatchesContainer* QualifierRoundMatchmakingSystem::matchmake() {
         matches_container->matches[i] = new_match;
     }
 
+    std::cout << "Number of Players Currently in Queue: " << this->matchmaking_queue->number_of_remaining_players_in_queue << std::endl;
     std::cout << "Number of Remaining Players : " << this->number_of_remaining_players << std::endl;;
     std::cout << "Matches Created : " << number_of_matches_to_be_made << std::endl;
 
@@ -214,15 +215,20 @@ void MatchmakingSystem::display_ranking() {
 void MatchmakingSystem::add_player_back_to_matchmaking(Player* winning_player, Player* losing_player) {
     if (current_matching_type == QUALIFIER) {
         dynamic_cast<QualifierRoundMatchmakingSystem*>(this->base_matchmaking_system)->enqueue(winning_player);
-        losing_player->performance.current_status = COMPLETED;
+        if (losing_player != nullptr) {
+            losing_player->performance.current_status = COMPLETED;
+        }
     }
 
     if (current_matching_type == KNOCKOUT) {
         dynamic_cast<KnockoutRoundMatchmakingSystem*>(this->base_matchmaking_system)->enqueue(winning_player);
-        dynamic_cast<KnockoutRoundMatchmakingSystem*>(this->base_matchmaking_system)->push_to_ranking(losing_player);
-        losing_player->performance.current_status = COMPLETED;
+        if (losing_player != nullptr) {
+            dynamic_cast<KnockoutRoundMatchmakingSystem*>(this->base_matchmaking_system)->push_to_ranking(losing_player);
+            losing_player->performance.current_status = COMPLETED;
+        }
     }
 }
+
 
 bool MatchmakingSystem::update_match_status(Match* target_match, MATCH_STATUS status) {
     switch (base_matchmaking_system->get_current_stage()) {

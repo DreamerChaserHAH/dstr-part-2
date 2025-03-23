@@ -69,7 +69,8 @@ enum PLAYER_TYPE{
 
 enum PLAYER_STATUS {
     COMPETING,
-    COMPLETED
+    COMPLETED,
+    WITHDRAWN
 };
 
 inline std::string get_player_status_string(PLAYER_STATUS status){
@@ -78,6 +79,8 @@ inline std::string get_player_status_string(PLAYER_STATUS status){
             return "COMPETING";
         case COMPLETED:
             return "COMPLETED";
+        case WITHDRAWN:
+            return "WITHDRAWN";
         default:
             return "COMPETING";
     }

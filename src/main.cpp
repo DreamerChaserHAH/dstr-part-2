@@ -1,10 +1,13 @@
 #include <iostream>
 #include <string>
+#include <limits>
 #include "player.hpp"
 #include "tournament/matchmaking.hpp"
 #include "tournament/tournament_schedule.hpp"
 #include "tournament/match_history.hpp"
-#include "tickets/TicketSalesMenu.hpp";
+#include "tickets/TicketSalesMenu.hpp"
+#include "withdrawal_manager.hpp"
+
 
 typedef bool (*FunctionPointer)();
 
@@ -191,7 +194,13 @@ inline bool update_current_match_status() {
     }
     tournament_scheduling_system->print_last_schedule();
     tournament_scheduling_system->last_match_completed(result_status_buffer);
-    match_history_queue->enqueue(last_schedule_slot->match, result_status_buffer);
+    match_history_queue->enqueue(
+    last_schedule_slot->match,
+    result_status_buffer,
+    last_schedule_slot->court,
+    last_schedule_slot->time_slot
+    );
+
 
     return true;
 }
@@ -203,12 +212,43 @@ bool scheduling_menu() {
     return true;
 }
 
-bool player_menu(){
-    std::string player_menu[] = {"Load Players", "Display Players", "Display Players (Sorted)", "Reset Players", "Display Player Status"};
-    FunctionPointer player_functions[] = {load_players, display_players, display_players_sorted, reset_players, display_player_status};
-    while (run_menu("Player Management", player_menu, player_functions, 5)) {}
+bool withdrawal_management() {
+    if (tournament_scheduling_system == nullptr) {
+        std::cout << "Initializing Tournament Scheduling System for Withdrawal Management..." << std::endl;
+        tournament_scheduling_system = new TournamentSchedulingSystem();
+    }
+    if (matchmaking_system == nullptr) {
+        std::cout << "Initializing Matchmaking System for Withdrawal Management..." << std::endl;
+        matchmaking_system = new MatchmakingSystem(player_list->sort(), player_list->number_of_players, tournament_scheduling_system);
+        tournament_scheduling_system->update_matchmaking_system(matchmaking_system);
+    }
+    return withdrawal_menu(player_list, tournament_scheduling_system, matchmaking_system);
+}
+
+
+bool player_menu() {
+    std::string player_menu[] = {
+        "Load Players",
+        "Display Players",
+        "Display Players (Sorted)",
+        "Reset Players",
+        "Display Player Status",
+        "Withdrawal Management"
+    };
+
+    FunctionPointer player_functions[] = {
+        load_players,
+        display_players,
+        display_players_sorted,
+        reset_players,
+        display_player_status,
+        withdrawal_management
+    };
+
+    while (run_menu("Player Management", player_menu, player_functions, 6)) {}  // Change count to 6
     return true;
 }
+
 bool view_match_history() {
     match_history_queue->displayHistory();
     return true;
@@ -218,13 +258,67 @@ bool save_match_history() {
     match_history_queue->saveHistoryToFile("match_history.csv");
     return true;
 }
+bool filter_by_match_type() {
+    std::cout << "\nSelect Match Type:\n";
+    std::cout << "1. Qualifier\n2. Round Robin\n3. Knockout\n";
+    int choice;
+    std::cin >> choice;
+    MATCH_TYPE selected_type;
 
-bool match_history_menu() {
-    std::string match_history_options[] = {"View Match History", "Save Match History to File"};
-    FunctionPointer match_history_functions[] = {view_match_history, save_match_history};
-    while (run_menu("Match History Management", match_history_options, match_history_functions, 2)) {}
+    switch (choice) {
+        case 1:
+            selected_type = QUALIFIER;
+        break;
+        case 2:
+            selected_type = ROUNDROBIN;
+        break;
+        case 3:
+            selected_type = KNOCKOUT;
+        break;
+        default:
+            std::cout << "Invalid choice!\n";
+        return true;
+    }
+
+    match_history_queue->filterByMatchType(selected_type);
     return true;
 }
+// Filter by player name function
+bool filter_by_player() {
+    std::cout << "\nEnter Player Name to Filter: ";
+    std::string name;
+
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+    // Get full line input (supports spaces in player name)
+    std::getline(std::cin, name);
+
+    // Call filter function from match history
+    match_history_queue->filterByPlayer(name);
+
+    return true;
+}
+
+
+bool match_history_menu() {
+    std::string match_history_options[] = {
+        "View Match History",
+        "Save Match History to File",
+        "Filter By Match Type",
+        "Filter By Player Name"
+    };
+
+    FunctionPointer match_history_functions[] = {
+        view_match_history,
+        save_match_history,
+        filter_by_match_type,
+        filter_by_player
+    };
+
+    while (run_menu("Match History Management", match_history_options, match_history_functions, 4)) {}
+    return true;
+}
+
 
 int main(){
      std::cout << "Welcome to APU Tennis Tournament Management System" << std::endl;

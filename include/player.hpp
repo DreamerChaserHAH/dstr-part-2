@@ -137,6 +137,19 @@ class CompetitionPlayerList{
             }
             return nullptr;
         }
+
+        // Added Getter for Index-based Access
+        Player* get_player_by_index(int index) {
+                if (index >= 0 && index < number_of_players) {
+                    return &player_list[index];
+                }
+                return nullptr;
+            }
+
+        // Added Getter for Total Players
+        int get_total_players() {
+                return number_of_players;
+            }
         
         /// @brief bubble sort implementation to sort the player list array by their rating
         /// @returns a sorted array of players

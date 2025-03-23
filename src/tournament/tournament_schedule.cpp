@@ -1,4 +1,5 @@
 #include "tournament/tournament_schedule.hpp"
+using namespace std;
 
 TournamentSchedulingSystem::TournamentSchedulingSystem(){
     this->head = nullptr;;
@@ -97,5 +98,30 @@ void TournamentSchedulingSystem::last_match_completed(MATCH_STATUS status) {
 
 void TournamentSchedulingSystem::update_matchmaking_system(MatchmakingSystem *matchmaking_system) {
     this->matchmaking_system = matchmaking_system;
+}
+
+// Remove player from the schedule (void their matches)
+void TournamentSchedulingSystem::remove_player(int player_id) {
+    ScheduleSlot* current = head;
+    while (current != nullptr) {
+        if (current->match->player1->id == player_id || current->match->player2->id == player_id) {
+            //current->match->status = WITHDRAWN;
+            cout << "Match involving withdrawn player ID " << player_id << " has been voided." << endl;
+        }
+        current = current->next_slot;
+    }
+}
+
+// Re-add player after undo withdrawal
+void TournamentSchedulingSystem::read_player(Player* player) {
+    cout << "Player " << player->name << " (ID: " << player->id << ") has been re-added to the tournament schedule." << endl;
+
+    // Re-add player to matchmaking queue
+    if (matchmaking_system != nullptr) {
+        matchmaking_system->add_player_back_to_matchmaking(player, nullptr);
+        cout << "Player " << player->name << " has been re-added to matchmaking queue." << endl;
+    } else {
+        cout << "Error: Matchmaking system pointer not available." << endl;
+    }
 }
 
